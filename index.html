@@ -4,12 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#000000">
-<title>Future Crew demos</title>
+<title>demoscene-recomp</title>
 <style>
   :root { --bg: #101014; --fg: #d8d8e0; --dim: #8a8a96; --edge: #2a2a34; }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
   main { max-width: 640px; margin: 0 auto; padding: 32px 16px; }
-  h1 { font-size: 22px; font-weight: 600; margin: 0 0 20px; text-align: center; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 6px; text-align: center; }
+  .lead { color: var(--dim); text-align: center; margin: 0 0 20px; }
+  .about { text-align: center; margin-top: 24px; font-size: 14px; }
+  .about a { color: var(--dim); }
   a.demo { display: block; padding: 16px 18px; margin: 12px 0; border: 1px solid var(--edge);
            border-radius: 8px; background: #16161c; color: var(--fg); text-decoration: none; }
   a.demo:hover, a.demo:focus { border-color: #555; background: #1c1c24; }
@@ -19,9 +22,11 @@
 </head>
 <body>
 <main>
-  <h1>Future Crew demos, in the browser</h1>
+  <h1>demoscene-recomp</h1>
+  <p class="lead">Classic PC demoscene productions running natively in the browser.</p>
   <a class="demo" href="unreal/web/"><div class="name">Unreal</div><div class="meta">v1.0, 1992</div></a>
   <a class="demo" href="second/web/"><div class="name">Second Reality</div><div class="meta">1993</div></a>
+  <p class="about"><a href="https://github.com/treylorswift/demoscene-recomp">How it works</a></p>
 </main>
 </body>
 </html>
