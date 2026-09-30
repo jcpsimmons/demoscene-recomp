@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#000000">
+<title>Second Reality (1993)</title>
+<style>
+  :root { --bg: #101014; --fg: #d8d8e0; --dim: #8a8a96; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, sans-serif; }
+  main { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; }
+  /* The picture is 320x200 (or 640x200, or 320x400) but a VGA monitor showed
+     every one of them at 4:3, so its pixels were not square. Every box here is 4:3 and the canvas is
+     STRETCHED into it (object-fit: fill, the default) - never "contain",
+     which would keep the 16:10 of the bitmap. */
+  canvas { display: block; width: min(96vw, calc(90vh * 4 / 3)); aspect-ratio: 4 / 3; image-rendering: pixelated; background: #000; }
+  /* fullscreen is the STAGE, not the canvas: the browser forces a fullscreen
+     element to fill the screen, so the canvas sits inside it as the largest
+     4:3 box that fits, centred on black */
+  #stage:fullscreen, #stage.max { display: flex; align-items: center; justify-content: center; background: #000; }
+  #stage:fullscreen canvas { width: min(100vw, calc(100vh * 4 / 3)); height: min(100vh, calc(100vw * 3 / 4)); aspect-ratio: auto; }
+  /* the same without the Fullscreen API (iPhone Safari has none for anything
+     but video): the stage covers the viewport. Launched from the Home Screen
+     the viewport IS the whole screen, since the app has no browser chrome. */
+  #stage.max { position: fixed; inset: 0; z-index: 10; }
+  #stage.max canvas { width: min(100vw, calc(100dvh * 4 / 3)); height: min(100dvh, calc(100vw * 3 / 4)); aspect-ratio: auto; }
+  body:has(#stage.max) { background: #000; overflow: hidden; }
+  .bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: center; width: 100%; }
+  select, button { font: inherit; padding: 4px 8px; background: #1c1c24; color: var(--fg); border: 1px solid #444; border-radius: 4px; }
+  button { cursor: pointer; }
+  #status { color: var(--dim); font-variant-numeric: tabular-nums; min-height: 1.4em; font-family: ui-monospace, Consolas, monospace; font-size: 13px; white-space: pre-line; }
+</style>
+</head>
+<body>
+<main>
+  <div id="stage"><canvas id="screen" width="320" height="200"></canvas></div>
+  <div class="bar">
+    <button id="start" disabled>Loading..</button>
+    <label>Section
+      <select id="section">
+        <option value="">Whole demo</option>
+        <option value="2">2 - Title picture</option>
+        <option value="3">3 - Forest</option>
+        <option value="4">4 - City</option>
+        <option value="5">5 - Rings and credits</option>
+      </select>
+    </label>
+    <label title="The city part with an interpolated picture between every two of the original's (70 fps), its polygons drawn with sub-pixel precision and shaded per pixel"><input type="checkbox" id="smoothcity"> Smooth City</label>
+    <label title="Start goes fullscreen; F also toggles it"><input type="checkbox" id="full"> Fullscreen</label>
+  </div>
+  <div id="status"></div>
+  <p style="color:var(--dim)">Future Crew's Second Reality (1993)</p>
+</main>
+<script>
+  /* The demo this page plays; web/unreal_web.js takes anything left out from
+     Unreal's defaults. The section is the DOS command tail (UNREAL_ARGS):
+     README.1ST's start points - 2 the title picture, 3 the forest (the
+     "landscape scroller"), 4 the city (the "vector part"), 5 the FUTURE CREW
+     rings and the end credits; none is the whole demo. All URLs are relative
+     to this page, so it also works from a sub-folder. */
+  const CPUBPS = 150000000;   /* the CPU speed, bytes/s: Phase 1's calibration
+                                 (SECOND_NOTES 5) - the one place to change it */
+  /* A per-program CPU speed (SECOND_PROGCPU, src/native/second/sseq.h):
+     "KEY:BPS,..." - while that program runs the clock is BPS instead of
+     CPUBPS. The default runs s16, the voxel landscape, at 75M: at 150M it
+     runs exactly twice the real-hardware video (SECOND_NOTES 15). "0" turns
+     it off; so does ?progcpu=0 on the URL (or ?progcpu=KEY:BPS,... another). */
+  const PROGCPU = new URLSearchParams(location.search).get("progcpu") ?? "0E029C:75000000";
+  window.DEMO = {
+    exe: "../original/second/SECOND.EXE",
+    /* SECOND.EXE has no packfile: it opens REALITY.FC (the music and the
+       programs' data) and the setup's two info texts by name from its own
+       directory */
+    files: { "REALITY.FC": "../original/second/REALITY.FC",
+             "FCINFO10.TXT": "../original/second/FCINFO10.TXT",
+             "README.1ST": "../original/second/README.1ST" },
+    engine: "../build/wasm/second.js", factory: "createSecond",
+    /* the setup screen flushes the keyboard at frame 26, so the answer is
+       held until frame 40: SoundBlaster Pro, High quality, no looping */
+    env: { UNREAL_KEYS: "@40,right,right,right,enter", UNREAL_CPUBPS: String(CPUBPS),
+           UNREAL_VGARNS: "500", UNREAL_IONS: "68", UNREAL_QUIET: "1",
+           SECOND_PROGCPU: PROGCPU },
+    /* The SB Pro plays 40 kHz stereo; the engine hands out the 20 kHz mono
+       average. The worker waits for the driver's rate to hold before it
+       opens the sound. */
+    audioRate: 20000, settle: 10, setupMax: 400,
+    lead: 18,
+    hideText: true,     /* don't show the text-mode setup screen */
+    /* fetched at page load with everything else, so Start is ready whatever
+       the Smooth City box says (below) */
+    preload: ["U2E_2X.0AB", "U2E_2X_noroll.0AB"],
+  };
+  /* SMOOTH CITY (off by default): one checkbox, or ?smoothcity=1, for the
+     whole bundle -
+       the smooth city data (SECOND_SMOOTHCITY, src/native/second/sseq.h): the
+         city plays U2E_2X.0AB, its animation with an interpolated record
+         between every two, one per retrace (70 distinct pictures/s against
+         35), on a faster CPU while it runs; the 125 KB file is fetched only
+         when it is on. It carries the rebuilt camera roll (SECOND_NOTES 26);
+       the sub-pixel city (SECOND_SUBPIXEL, ssubpix.c, SECOND_NOTES 23): the
+         polygons projected without rounding to whole pixels and filled with
+         pixel-centre sampling, so slow motion no longer moves whole edges a
+         pixel at a time;
+       per-pixel shading (SECOND_SUBPIXEL_SHADE): gouraud colour interpolated
+         per pixel, and the near-clipped vertex's colour interpolated.
+     Debugging overrides, not shown: ?smoothroll=0 serves U2E_2X_noroll.0AB
+     (the smooth data before the roll rebuild) under the same name;
+     ?subpixel=0|1 and ?subpixelshade=0|1 set those two whatever the box says.
+     unreal_web.js reads DEMO.files and DEMO.env at Start, so the box edits
+     those objects in place. */
+  (() => {
+    const box = document.getElementById("smoothcity");
+    const p = new URLSearchParams(location.search);
+    const flag = (k) => { const v = p.get(k); return v === null ? null : (v === "1" || v === "true"); };
+    box.checked = flag("smoothcity") === true;
+    const roll = flag("smoothroll") !== false;
+    const sub = flag("subpixel"), shade = flag("subpixelshade");
+    const apply = () => {
+      const on = box.checked;
+      if (on) {
+        DEMO.files["U2E_2X.0AB"] = roll ? "U2E_2X.0AB" : "U2E_2X_noroll.0AB";
+        DEMO.env.SECOND_SMOOTHCITY = "1";
+      } else { delete DEMO.files["U2E_2X.0AB"]; delete DEMO.env.SECOND_SMOOTHCITY; }
+      if (sub ?? on) DEMO.env.SECOND_SUBPIXEL = "1"; else delete DEMO.env.SECOND_SUBPIXEL;
+      if (shade ?? on) DEMO.env.SECOND_SUBPIXEL_SHADE = "1"; else delete DEMO.env.SECOND_SUBPIXEL_SHADE;
+    };
+    box.addEventListener("change", apply);
+    apply();
+  })();
+  /* BEAM-ACCURATE VGA (ON by default, built into the engine; SECOND_BEAMVGA,
+     src/native/runtime/pcfull.h, SECOND_NOTES 21-23): each scanline is
+     composed from video memory and the palette as they stood when the beam
+     drew it - which removes the seam a quarter of the way down the techno
+     part's interference circles. The glenz vectors keep the whole-frame
+     compose (they tear under the beam: SECOND_NOTES 22); ?beamexclude=KEY,...
+     replaces that list, empty = none. ?beamvga=0 turns it off, for comparison. */
+  (() => {
+    const p = new URLSearchParams(location.search);
+    const bx = p.get("beamexclude");
+    if (bx !== null) DEMO.env.SECOND_BEAMVGA_EXCLUDE = bx;
+    const q = p.get("beamvga");
+    if (q === "0" || q === "false") DEMO.env.SECOND_BEAMVGA = "0";
+  })();
+</script>
+<script src="unreal_web.js"></script>
+</body>
+</html>
