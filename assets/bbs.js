@@ -141,7 +141,7 @@
 
   const build = () => {
     pending = 0;
-    if (document.documentElement.dataset.look !== "retro") { space.innerHTML = ""; space.style.height = "0"; return; }
+    if (document.documentElement.dataset.look !== "retro") { space.innerHTML = ""; space.style.height = "0"; stars = []; active.length = 0; return; }
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     const cw = rem / 2, ch = rem;
     const W = document.documentElement.clientWidth;
@@ -220,15 +220,17 @@
         const d = near && c >= near[0] && c <= near[2] && r >= near[1] && r <= near[3] ? DENSITY * 2.5 : DENSITY;
         if (!free[r * cols + c] || hash(r, c, 1) >= d) { line += " "; continue; }
         const k = hash(r, c, 2), kind = KINDS.find((x) => k < x[0]);
-        line += '<span class="' + kind[2] + '">' + (esc[kind[1]] || kind[1]) + "</span>";
+        line += '<span class="s ' + kind[2] + '">' + (esc[kind[1]] || kind[1]) + "</span>";
       }
       out += line.replace(/ +$/, "") + "\n";
     }
     space.style.width = cols * cw + "px";
     space.style.height = H + "px";
     space.innerHTML = out;
+    stars = [...space.querySelectorAll(".s")]; active.length = 0;
   };
-  let pending = 0;
+  let pending = 0, stars = [];
+  const active = [];
   const later = () => { if (!pending) pending = requestAnimationFrame(build); };
   window.addEventListener("resize", later);
   window.addEventListener("recomp-look", later);
@@ -238,6 +240,29 @@
     const ro = new ResizeObserver(later);
     for (const el of [body, ...document.querySelectorAll("main, #status, #start, #stage")]) ro.observe(el);
   }
+  /* TWINKLE: now and then a star steps up to white - a bigger dot at the
+     peak - and back down, one VGA colour per step, like an ANSI screen's
+     colour cycling. CP437 dots and the palette's greys only; a handful of
+     stars at a time. Off with prefers-reduced-motion. */
+  const STEPS = [["v7", "∙"], ["vf", "∙"], ["vf", "•"], ["vf", "∙"], ["v7", "∙"]];
+  const RATE = 0.002;   /* stars starting per star per step: ~10 lit on a full screen */
+  let owed = 0;
+  const twinkle = () => {
+    if (document.hidden || !stars.length) return;
+    for (let i = active.length - 1; i >= 0; i--) {
+      const t = active[i];
+      if (++t.k >= STEPS.length) { t.el.className = t.cls; t.el.textContent = t.ch; active.splice(i, 1); continue; }
+      t.el.className = "s " + STEPS[t.k][0]; t.el.textContent = STEPS[t.k][1];
+    }
+    for (owed += stars.length * RATE; owed >= 1; owed--) {
+      const el = stars[Math.floor(Math.random() * stars.length)];
+      if (active.some((t) => t.el === el)) continue;
+      const t = { el, cls: el.className, ch: el.textContent, k: 0 };
+      el.className = "s " + STEPS[0][0]; el.textContent = STEPS[0][1];
+      active.push(t);
+    }
+  };
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) setInterval(twinkle, 140);
   build();
 })();
 /* VISITORS. Our own counter: a Cloudflare Worker (web/counter) holding one
