@@ -1,0 +1,90 @@
+/* demoscene-recomp - the demo pages: a DOS window round the picture, a control
+ * panel, a status readout and the NFO. Loaded after bbs.css.
+ *
+ * THE PICTURE: 320x200 (or 640x200, 320x400) shown at 4:3, as a VGA monitor
+ * showed it - every box here is 4:3 and the canvas is STRETCHED into it
+ * (object-fit: fill, the default), pixelated, unfiltered. "CRT picture" (#stage.crt)
+ * is the only thing that ever changes how it looks, and it is off by default. */
+.deck {
+  display: grid; gap: 1.2em 28px; padding: 1.4em 16px 1.6em;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "head" "pic" "ctl" "stat" "nfo";
+  max-width: 760px; margin: 0 auto;
+}
+.head { grid-area: head; } .pic { grid-area: pic; } .ctl { grid-area: ctl; } .stat { grid-area: stat; } .nfo { grid-area: nfo; }
+.deck > .box { margin: 0; }
+.ctl, .stat, .nfo { margin-top: .4em !important; }
+
+/* canvas size outside fullscreen: the 4:3 box that fits the column (phone) or
+   the space left of the side panel (desktop) */
+canvas#screen { display: block; aspect-ratio: 4 / 3; image-rendering: pixelated; background: #000;
+  width: calc(100vw - 32px); max-width: 100%; }
+@media (min-width: 1000px) {
+  .deck {
+    max-width: none; align-items: start; justify-content: center;
+    grid-template-columns: minmax(340px, 420px) auto;
+    grid-template-areas: "head pic" "ctl pic" "stat pic" "nfo pic" ". pic";
+    grid-template-rows: auto auto auto auto 1fr;
+  }
+  canvas#screen { width: min(calc(100vw - 420px - 28px - 32px), calc((100vh - 6em) * 4 / 3)); max-width: none; }
+}
+
+/* ---- the picture: no frame round it, just the 4:3 picture on black */
+.win { position: relative; }
+
+/* the stage sits ABOVE the page CRT overlay (z-index 1000) */
+#stage { position: relative; z-index: 1001; background: #000; }
+#stage .tube { display: block; position: relative; }
+
+/* ---- fullscreen: the STAGE, not the canvas (the browser forces a fullscreen
+   element to fill the screen); the canvas is the largest 4:3 box that fits,
+   centred on black. Unchanged from the plain page. */
+#stage:fullscreen, #stage.max { display: flex; align-items: center; justify-content: center; background: #000; }
+#stage:fullscreen canvas { width: min(100vw, calc(100vh * 4 / 3)); height: min(100vh, calc(100vw * 3 / 4)); aspect-ratio: auto; max-width: none; }
+/* without the Fullscreen API (iPhone Safari): the stage covers the viewport */
+#stage.max { position: fixed; inset: 0; z-index: 2000; }
+#stage.max canvas { width: min(100vw, calc(100dvh * 4 / 3)); height: min(100dvh, calc(100vw * 3 / 4)); aspect-ratio: auto; max-width: none; }
+body:has(#stage.max) { background: #000; overflow: hidden; }
+
+/* ---- CRT picture: OPT-IN (#crt), off by default ---------------------------
+   scanlines (one per VGA line pair of a 200-line picture) and a soft phosphor
+   bloom - on the picture only, no frame, corners or edge shading. */
+#stage.crt .tube::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,.32) 50%) 0 0 / 100% calc(100% / 200);
+}
+#stage.crt canvas { filter: brightness(1.18) saturate(1.12) contrast(1.04) blur(.35px); }
+
+/* ---- side panel ----------------------------------------------------------- */
+.head { text-align: center; }
+.head pre.logo { --max: 1rem; display: inline-block; text-align: left; font-size: min(var(--max), calc((min(100vw, 420px) - 32px) / (var(--cols) * 0.5))); }
+.head .sub { margin: .6em 0 0; }
+.head .sub .k1 { margin: 0 .5ch; }
+
+.ctl .rows { display: grid; gap: .8em; justify-items: start; }
+.ctl .btn { font-size: 1rem; padding: .25em 1.5ch; }
+.ctl .lbl { color: var(--w); margin-left: 1ch; }
+.ctl .keys { color: var(--w0); }
+.ctl .keys b { color: var(--y); font-weight: normal; }
+
+/* the Section menu */
+.sel { position: relative; display: inline-block; }
+.sel select {
+  font: inherit; appearance: none; -webkit-appearance: none; cursor: pointer;
+  background: var(--k); color: var(--w); border: calc(1rem / 16) solid var(--c); border-image: linear-gradient(to right, var(--c) 0 6%, var(--c1) 6% 94%, var(--c) 94% 100%) 1; border-radius: 0;
+  padding: .2em 3.5ch .2em 1ch; text-shadow: none;
+}
+.sel select:hover { background: var(--b); }
+.sel select option { background: var(--k); color: var(--w0); }
+.sel::after { content: "\25BC"; position: absolute; right: 1ch; top: 50%; transform: translateY(-50%); color: var(--w); pointer-events: none; }
+
+/* the status line: a terminal readout */
+.term { display: flex; flex-wrap: wrap; gap: 0 1ch; color: var(--g1); min-height: 2.5em; }
+.term .pr { color: var(--w0); }
+#status { color: var(--w0); font-size: 1rem; font-variant-numeric: tabular-nums; white-space: pre-line; min-height: 1.25em; word-break: break-word; margin-top: .6em; }
+
+.nfo p { margin: .9em 0 0; }
+.nfo .note { color: var(--w0); }
+@media (max-width: 999px) { .head pre.logo { --max: .6rem; } .head .sub { margin-top: .4em; } }
+@media (min-width: 1000px) { .head pre.logo { --max: 1rem; } }
+

@@ -1,0 +1,114 @@
+/* demoscene-recomp - the MODERN look: the same pages without the BBS. Loaded
+ * last; every rule is under html[data-look="modern"] (fit.js sets it from the
+ * ≡ menu's choice), so the retro look is untouched. The palette is the one the
+ * plain site used. No starfield (bbs.js draws none), no ANSI logos, the system
+ * font, real checkboxes. The demo picture itself is never touched. */
+html[data-look="modern"] {
+  --page: #101014; --fg: #d8d8e0; --dim: #8a8a96; --edge: #2a2a34; --card: #16161c; --card2: #1c1c24;
+  --accent: #8fb3ff;
+}
+html[data-look="modern"] body {
+  background: var(--page); color: var(--fg);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: auto;
+}
+html[data-look="modern"] .rt,
+html[data-look="modern"] #space,
+html[data-look="modern"] pre.logo,
+html[data-look="modern"] .tag .k1,
+html[data-look="modern"] .bar.foot { display: none; }
+html[data-look="modern"] .mo { display: inline; }
+html[data-look="modern"] a { color: var(--accent); }
+html[data-look="modern"] a:hover { background: none; color: #fff; }
+html[data-look="modern"] :focus-visible { outline: 2px solid var(--accent); }
+html[data-look="modern"] ::selection { background: var(--accent); color: #000; }
+/* colour spans from the BBS palette: plain text here */
+html[data-look="modern"] :is(.c1, .y, .w, .w0, .r1, .b1, .dim) { color: inherit; }
+
+/* ---- the top bar: a thin header with the way back and the ≡ menu */
+html[data-look="modern"] .bar {
+  background: var(--page); color: var(--dim); border-bottom: 1px solid var(--edge);
+  min-height: 44px; padding: 0 16px; line-height: 1.5;
+}
+html[data-look="modern"] .bar a { color: var(--fg); font-weight: 600; }
+html[data-look="modern"] .bar a:hover { background: none; color: #fff; }
+html[data-look="modern"] .bar #lookbtn {
+  color: var(--fg); font-size: 22px; line-height: 1; padding: 4px 10px; border-radius: 6px;
+}
+html[data-look="modern"] .bar #lookbtn:hover,
+html[data-look="modern"] #lookbtn[aria-expanded="true"] { background: var(--card2); color: #fff; }
+html[data-look="modern"] #lookmenu {
+  top: calc(100% + 8px); min-width: 180px; padding: 6px; border: 1px solid var(--edge); border-image: none;
+  border-radius: 10px; background: var(--card); color: var(--fg); box-shadow: 0 8px 28px rgba(0,0,0,.5);
+}
+html[data-look="modern"] #lookmenu .lh { color: var(--dim); font-size: 13px; padding: 4px 10px 6px; }
+html[data-look="modern"] .bar #lookmenu button { color: var(--fg); padding: 8px 10px; border-radius: 6px; white-space: nowrap; }
+html[data-look="modern"] .bar #lookmenu button::before { content: ""; display: inline-block; width: 20px; }
+html[data-look="modern"] .bar #lookmenu button[aria-checked="true"]::before { content: "\2713"; color: var(--accent); }
+html[data-look="modern"] .bar #lookmenu button:hover,
+html[data-look="modern"] .bar #lookmenu button:focus-visible { background: var(--card2); color: #fff; }
+
+/* ---- headings: the h1 the logos stood in for */
+html[data-look="modern"] h1.sr {
+  position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: normal;
+  margin: 0; font-size: 26px; font-weight: 600; color: #fff;
+}
+html[data-look="modern"] .screen { max-width: 680px; padding-top: 40px; }
+html[data-look="modern"] .tag { color: var(--dim); margin: 6px 0 0; }
+
+/* ---- boxes become cards; the title a heading inside them */
+html[data-look="modern"] .box {
+  border: 1px solid var(--edge); border-image: none; border-radius: 10px; background: var(--card);
+  padding: 18px 20px; margin-top: 20px;
+}
+html[data-look="modern"] .box > .t {
+  position: static; display: block; background: none; color: #fff; padding: 0; margin: 0 0 12px;
+  font-size: 17px; font-weight: 600; max-width: none;
+}
+html[data-look="modern"] .box > .t .i { color: inherit; }
+
+/* ---- the landing menu: one row per demo */
+html[data-look="modern"] ol.menu { margin: 0 -8px; }
+html[data-look="modern"] ol.menu a { padding: 12px; border-radius: 8px; gap: 0 12px; color: var(--fg); }
+html[data-look="modern"] ol.menu :is(.arr, .key) { display: none; }
+html[data-look="modern"] ol.menu .lead::after { content: none; }
+html[data-look="modern"] ol.menu .name { color: #fff; font-weight: 600; font-size: 17px; }
+html[data-look="modern"] ol.menu .grp, html[data-look="modern"] ol.menu .yr { color: var(--dim); }
+html[data-look="modern"] ol.menu li.on a { background: var(--card2); }
+html[data-look="modern"] ol.menu li.on .lead { color: transparent; }
+
+html[data-look="modern"] ol.steps li { grid-template-columns: 28px 1fr; margin-bottom: 8px; }
+html[data-look="modern"] ol.steps li::before { content: counter(s) "."; color: var(--dim); }
+html[data-look="modern"] .link a::before, html[data-look="modern"] .link a::after { content: none; }
+html[data-look="modern"] .link a { color: var(--accent); }
+html[data-look="modern"] .link a:hover { background: none; text-decoration: underline; }
+
+/* ---- the demo pages' side panel */
+html[data-look="modern"] .head { text-align: left; }
+html[data-look="modern"] .btn {
+  border-radius: 8px; padding: 8px 22px; background: var(--fg); color: #101014; font-weight: 600; font-size: 16px;
+}
+html[data-look="modern"] .btn::before, html[data-look="modern"] .btn::after { content: none; }
+html[data-look="modern"] .btn:hover:not(:disabled), html[data-look="modern"] .btn:focus-visible { background: #fff; color: #101014; }
+html[data-look="modern"] .btn:disabled { background: var(--edge); color: var(--dim); }
+html[data-look="modern"] .ctl .lbl { color: var(--dim); }
+html[data-look="modern"] .sel select {
+  border: 1px solid var(--edge); border-image: none; border-radius: 8px; background: var(--card2); color: var(--fg);
+  padding: 6px 36px 6px 10px;
+}
+html[data-look="modern"] .sel select:hover { background: #22222c; }
+html[data-look="modern"] .sel select option { background: var(--card); color: var(--fg); }
+html[data-look="modern"] .sel::after { content: "\25BE"; color: var(--dim); right: 12px; }
+html[data-look="modern"] label.ck { color: var(--fg); gap: 10px; align-items: center; }
+html[data-look="modern"] label.ck input {
+  position: static; opacity: 1; width: 16px; height: 16px; margin: 0; accent-color: var(--accent);
+}
+html[data-look="modern"] label.ck .bx { display: none; }
+html[data-look="modern"] label.ck .k1 { color: var(--dim); }
+html[data-look="modern"] #status { color: var(--dim); font-size: 14px; }
+html[data-look="modern"] dl.nfo { gap: 4px 16px; }
+html[data-look="modern"] dl.nfo dt { color: var(--dim); }
+html[data-look="modern"] dl.nfo dt::after { content: none; }
+html[data-look="modern"] dl.nfo dd { color: var(--fg); }
+html[data-look="modern"] .nfo .note { color: var(--dim); }
+html[data-look="modern"] .visits { color: var(--dim); font-size: 14px; }

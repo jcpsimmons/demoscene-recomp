@@ -1,0 +1,179 @@
+/* demoscene-recomp - the BBS look shared by the chooser and the demo pages.
+ *
+ * Font: "IBM VGA 8x16" from The Ultimate Oldschool PC Font Pack by VileR
+ * (int10h.org), CC BY-SA 4.0 - see FONT-LICENSE.TXT next to it. Self-hosted:
+ * no request leaves the site.
+ *
+ * Colours are the 16 of the VGA text-mode palette and nothing else, and of
+ * those mostly the ones StarPort - the Future Crew World HQ BBS - drew its
+ * login screen in: black space, bright cyan, blue and light blue, the greys,
+ * white, yellow and red.
+ *
+ * The CRT treatment here is for the PAGE only. The demo picture (#stage) sits
+ * above it and is never filtered unless the viewer ticks "CRT picture"
+ * (#stage.crt, demo pages). */
+@font-face {
+  font-family: "VGA 8x16";
+  src: url("Web437_IBM_VGA_8x16.woff") format("woff");
+  font-display: block;
+}
+
+:root {
+  --page: #000000;   /* black space, as StarPort's; the picture's edge is where the stars stop */
+  --k: #000000;  --b: #0000AA;  --g: #00AA00;  --c: #00AAAA;
+  --r: #AA0000;  --m: #AA00AA;  --y0: #AA5500; --w0: #AAAAAA;
+  --k1: #555555; --b1: #5555FF; --g1: #55FF55; --c1: #55FFFF;
+  --r1: #FF5555; --m1: #FF55FF; --y: #FFFF55;  --w: #FFFFFF;
+  --font: "VGA 8x16", "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100vh; min-height: 100dvh;
+  background: var(--page); color: var(--w0);
+  font: 1rem/1.25 var(--font);
+  font-synthesis: none; -webkit-font-smoothing: none;
+  overflow-x: hidden;
+  display: flex; flex-direction: column;
+}
+body > main { flex: 1 0 auto; }
+a { color: var(--c1); text-decoration: none; }
+a:hover { color: var(--w); background: var(--b); }
+::selection { background: var(--c1); color: var(--k); }
+:focus-visible { outline: 2px solid var(--y); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.blink { animation: blink 1.06s steps(1, end) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .blink { animation: none !important; }
+}
+
+/* ---- status bars (top and bottom), like a terminal program's -------------- */
+.bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0 2ch;
+  background: var(--b); color: var(--w); padding: 0 1ch; min-height: 1.25em;
+  line-height: 1.25; text-shadow: none;
+}
+.bar .hi { color: var(--y); }
+.bar .c  { color: var(--c1); }
+.bar .sp { flex: 1; }
+@media (max-width: 560px) { .bar .wide { display: none; } }
+.bar a { color: var(--w); }
+.bar a:hover, .bar a:focus-visible { background: var(--c); color: var(--k); }
+.bar button {
+  font: inherit; color: var(--w); background: none; border: 0; padding: 0; cursor: pointer; text-shadow: inherit;
+}
+.bar button:hover { background: var(--c); color: var(--k); }
+.bar.foot { background: var(--w0); color: var(--k); }
+.bar.foot .hi { color: var(--r); }
+.bar.foot button { color: var(--k); }
+.bar.foot button:hover { background: var(--k); color: var(--w0); }
+.bar.foot a { color: var(--b); }
+.bar.foot a:hover { background: var(--b); color: var(--w); }
+
+/* ---- the ANSI logo: half blocks, a colour per text row, a ░ shadow -------- */
+pre.logo {
+  margin: 0; line-height: 1; white-space: pre; overflow: hidden; font-family: var(--font);
+  /* --cols columns of a 0.5em-wide font, fitted to the column it sits in */
+  font-size: min(var(--max, 2rem), calc((100vw - 32px) / (var(--cols) * 0.5)));
+}
+/* a colour per PIXEL row: ▀ takes the upper pixel as its colour and the lower
+   one as its background, so every half-cell is exact */
+pre.logo { --p0: var(--w); --p1: var(--c1); --p2: var(--c1); --p3: var(--c1); --p4: var(--b1); --p5: var(--b1); --ps: var(--b); }
+pre.logo .f0 { color: var(--p0); } pre.logo .f1 { color: var(--p1); } pre.logo .f2 { color: var(--p2); }
+pre.logo .f3 { color: var(--p3); } pre.logo .f4 { color: var(--p4); } pre.logo .f5 { color: var(--p5); }
+pre.logo .fs { color: var(--ps); text-shadow: none; }
+pre.logo .b0 { background: var(--p0); } pre.logo .b1 { background: var(--p1); } pre.logo .b2 { background: var(--p2); }
+pre.logo .b3 { background: var(--p3); } pre.logo .b4 { background: var(--p4); } pre.logo .b5 { background: var(--p5); }
+pre.logo .bs { background: var(--ps); }
+
+/* ANSI art drawn in the VGA palette by index: .vN the character, .uN behind it
+   (the space art, the planet in the landing logo) */
+.v0{color:var(--k)} .v1{color:var(--b)} .v4{color:var(--r)} .v7{color:var(--w0)}
+.v8{color:var(--k1)} .v9{color:var(--b1)} .vb{color:var(--c1)} .vc{color:var(--r1)}
+.ve{color:var(--y)} .vf{color:var(--w)}
+.u0{background:var(--k)} .u1{background:var(--b)} .u4{background:var(--r)} .u7{background:var(--w0)}
+.u8{background:var(--k1)} .u9{background:var(--b1)} .ub{background:var(--c1)} .uc{background:var(--r1)}
+.ue{background:var(--y)} .uf{background:var(--w)}
+
+/* ---- space: a starfield of CP437 characters on the 8x16 grid (bbs.js) -----
+   behind everything, cut away under the text, the boxes and the picture */
+#space {
+  position: absolute; left: 0; top: 0; z-index: -1; overflow: hidden; pointer-events: none;
+  margin: 0; font: 1rem/1rem var(--font); white-space: pre; color: var(--k1);
+  -webkit-user-select: none; user-select: none;
+}
+
+/* ---- frames, as StarPort's "FUTURE CREW WHQ" frame: a SINGLE line, one
+   font pixel thick (1rem/16, so it stays on the 8x16 grid); the sides dark
+   red (#AA0000), the horizontal lines light red (#FF5555) with dark red ends -
+   flat VGA steps, no blending. The title sits in the top line between ┤ ├. */
+.box {
+  position: relative; padding: 1.1em 2ch .9em; margin: 1.6em 0 0;
+  border: calc(1rem / 16) solid var(--r);
+  border-image: linear-gradient(to right, var(--r) 0 6%, var(--r1) 6% 94%, var(--r) 94% 100%) 1;
+}
+.box > .t {
+  position: absolute; top: -.7em; left: 1.5ch; background: var(--page); color: var(--c1); padding: 0;
+  white-space: nowrap; max-width: calc(100% - 3ch); overflow: hidden;
+}
+.box > .t .i { color: var(--w); }
+.box p { margin: 0 0 .75em; }
+.box p:last-child { margin-bottom: 0; }
+.dim { color: var(--w0); }
+.c1 { color: var(--c1); } .y { color: var(--y); } .w { color: var(--w); } .w0 { color: var(--w0); } .r1 { color: var(--r1); } .b1 { color: var(--b1); }
+.k1 { color: var(--k1); text-shadow: none; }
+
+/* key: value lines in an NFO */
+dl.nfo { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: .15em 1ch; }
+dl.nfo dt { color: var(--c1); }
+dl.nfo dt::after { content: " :"; color: var(--k1); }
+dl.nfo dd { margin: 0; color: var(--w); min-width: 0; }
+
+/* ---- BBS-style buttons and boxes ------------------------------------------ */
+.btn {
+  font: inherit; line-height: 1.25; cursor: pointer; border: 0; padding: .2em 1ch; text-shadow: none;
+  background: var(--c1); color: var(--k); white-space: nowrap;
+}
+.btn::before { content: "[ "; }
+.btn::after  { content: " ]"; }
+.btn:hover:not(:disabled), .btn:focus-visible { background: var(--y); color: var(--k); }
+.btn:disabled { background: var(--k1); color: var(--w0); cursor: progress; }
+
+/* a checkbox drawn as [x]: the real input stays (the scripts read it), only hidden */
+label.ck { display: inline-flex; align-items: baseline; gap: 1ch; cursor: pointer; color: var(--w); }
+label.ck input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+label.ck .bx { color: var(--c1); white-space: pre; }
+label.ck .bx::before { content: "[ ]"; }
+label.ck input:checked + .bx::before { content: "[x]"; color: var(--y); }
+label.ck input:focus-visible + .bx { outline: 2px solid var(--y); outline-offset: 1px; }
+label.ck:hover .bx { background: var(--b); }
+
+/* ---- the ≡ menu (top bar): the site style, Retro / Modern (bbs.js) ------- */
+.mo { display: none; }
+.lookm { position: relative; }
+.bar #lookbtn { padding: 0 1ch; }
+#lookbtn[aria-expanded="true"] { background: var(--c); color: var(--k); }
+#lookmenu {
+  position: absolute; right: 0; top: 100%; z-index: 3000; display: flex; flex-direction: column;
+  min-width: 18ch; padding: .5em 0; background: var(--k); color: var(--w);
+  border: calc(1rem / 16) solid var(--r);
+  border-image: linear-gradient(to right, var(--r) 0 6%, var(--r1) 6% 94%, var(--r) 94% 100%) 1;
+}
+#lookmenu[hidden] { display: none; }
+#lookmenu .lh { color: var(--c1); padding: 0 1ch .25em; }
+.bar #lookmenu button { text-align: left; padding: .1em 1ch; color: var(--w); white-space: pre; }
+.bar #lookmenu button::before { content: "( ) "; color: var(--c1); }
+.bar #lookmenu button[aria-checked="true"]::before { content: "(\2022) "; }
+.bar #lookmenu button:hover, .bar #lookmenu button:focus-visible { background: var(--b); color: var(--w); outline: none; }
+.box > h2.t { font: inherit; margin: 0; }
+
+/* ---- the visitor counter (landing page, bbs.js): an odometer of digits ---- */
+.visits { text-align: center; margin: 1.6em 0 0; color: var(--w0); }
+.visits[hidden] { display: none; }
+.visits .odo { margin-left: 1ch; }
+.visits .odo span { background: var(--b); color: var(--w); }
+.visits .odo span + span { margin-left: calc(1rem / 8); }

@@ -7,52 +7,79 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="theme-color" content="#000000">
 <title>Second Reality (1993)</title>
-<style>
-  :root { --bg: #101014; --fg: #d8d8e0; --dim: #8a8a96; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, sans-serif; }
-  main { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; }
-  /* The picture is 320x200 (or 640x200, or 320x400) but a VGA monitor showed
-     every one of them at 4:3, so its pixels were not square. Every box here is 4:3 and the canvas is
-     STRETCHED into it (object-fit: fill, the default) - never "contain",
-     which would keep the 16:10 of the bitmap. */
-  canvas { display: block; width: min(96vw, calc(90vh * 4 / 3)); aspect-ratio: 4 / 3; image-rendering: pixelated; background: #000; }
-  /* fullscreen is the STAGE, not the canvas: the browser forces a fullscreen
-     element to fill the screen, so the canvas sits inside it as the largest
-     4:3 box that fits, centred on black */
-  #stage:fullscreen, #stage.max { display: flex; align-items: center; justify-content: center; background: #000; }
-  #stage:fullscreen canvas { width: min(100vw, calc(100vh * 4 / 3)); height: min(100vh, calc(100vw * 3 / 4)); aspect-ratio: auto; }
-  /* the same without the Fullscreen API (iPhone Safari has none for anything
-     but video): the stage covers the viewport. Launched from the Home Screen
-     the viewport IS the whole screen, since the app has no browser chrome. */
-  #stage.max { position: fixed; inset: 0; z-index: 10; }
-  #stage.max canvas { width: min(100vw, calc(100dvh * 4 / 3)); height: min(100dvh, calc(100vw * 3 / 4)); aspect-ratio: auto; }
-  body:has(#stage.max) { background: #000; overflow: hidden; }
-  .bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: center; width: 100%; }
-  select, button { font: inherit; padding: 4px 8px; background: #1c1c24; color: var(--fg); border: 1px solid #444; border-radius: 4px; }
-  button { cursor: pointer; }
-  #status { color: var(--dim); font-variant-numeric: tabular-nums; min-height: 1.4em; font-family: ui-monospace, Consolas, monospace; font-size: 13px; white-space: pre-line; }
-</style>
+<script src="../../assets/fit.js"></script>
+<link rel="preload" href="../../assets/Web437_IBM_VGA_8x16.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../../assets/bbs.css">
+<link rel="stylesheet" href="../../assets/demo.css">
+<link rel="stylesheet" href="../../assets/modern.css">
 </head>
 <body>
-<main>
-  <div id="stage"><canvas id="screen" width="320" height="200"></canvas></div>
-  <div class="bar">
-    <button id="start" disabled>Loading..</button>
-    <label>Section
-      <select id="section">
-        <option value="">Whole demo</option>
-        <option value="2">2 - Title picture</option>
-        <option value="3">3 - Forest</option>
-        <option value="4">4 - City</option>
-        <option value="5">5 - Rings and credits</option>
-      </select>
-    </label>
-    <label title="The city part with an interpolated picture between every two of the original's (70 fps), its polygons drawn with sub-pixel precision and shaded per pixel"><input type="checkbox" id="smoothcity"> Smooth City</label>
-    <label title="Start goes fullscreen; F also toggles it"><input type="checkbox" id="full"> Fullscreen</label>
-  </div>
-  <div id="status"></div>
-  <p style="color:var(--dim)">Future Crew's Second Reality (1993)</p>
+<div class="bar top">
+  <a href="../../">&#9668; <span class="rt">MAIN MENU</span><span class="mo">demoscene-recomp</span></a>
+  <span class="sp"></span>
+  <span class="hi wide rt">demoscene-recomp BBS</span>
+  <span class="rt">NODE 1</span><span class="c rt"><span class="wide">USR HST DS V32Bis </span>38,4Kbps</span>
+  <span class="lookm"><button type="button" id="lookbtn" aria-haspopup="menu" aria-expanded="false" aria-controls="lookmenu" title="Site style">&#8801;</button><span id="lookmenu" role="menu" aria-label="Site style" hidden><span class="lh">Site style</span><button type="button" role="menuitemradio" data-look="retro">Retro</button><button type="button" role="menuitemradio" data-look="modern">Modern</button></span></span>
+</div>
+
+<main class="deck">
+  <header class="head">
+    <h1 class="sr">Second Reality - Future Crew - 1993</h1>
+<pre class="logo" style="--cols: 41" aria-hidden="true"><span class="vf">   ▀▀▀▀█ ██▀▀█ ██▀▀▄</span>
+<span class="c1">── ██▀▀▀ ███ █ ███ █ ──R─E─A─L─I─T─Y──▄</span>
+<span class="c1">▀▀ ███ ▄ ▀▀▀   ▀▀▀▀▀ ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</span>
+<span class="v9">sp ███▄█  b y   F u t u r e   C r e w</span>
+<span class="vf">┌───────────────────────────────────────┐</span>
+<span class="vf">│  ■ The winning demo of Assembly&#x27;93 ■  │</span>
+<span class="vf">│     · SB, SB Pro and GUS support ·    │</span>
+<span class="vf">└───────────────────────────────────────┘</span>
+<span class="vf"> In  DOLBY SURROUND  Where Available</span></pre>
+  </header>
+
+  <section class="pic win" aria-label="The demo">
+    <div id="stage"><div class="tube"><canvas id="screen" width="320" height="200"></canvas></div></div>
+  </section>
+
+  <section class="ctl box" aria-labelledby="ctl-t">
+    <span class="t" id="ctl-t"><span class="i">D</span>emo <span class="i">C</span>ontrols</span>
+    <div class="rows">
+      <button id="start" class="btn" disabled>Loading..</button>
+      <label><span class="sel">
+        <select id="section">
+          <option value="">Whole demo</option>
+          <option value="2">2 - Title picture</option>
+          <option value="3">3 - Forest</option>
+          <option value="4">4 - City</option>
+          <option value="5">5 - Rings and credits</option>
+        </select></span><span class="lbl">Section</span>
+      </label>
+      <label class="ck" title="The city part with an interpolated picture between every two of the original's (70 fps), its polygons drawn with sub-pixel precision and shaded per pixel"><input type="checkbox" id="smoothcity"><span class="bx" aria-hidden="true"></span>Smooth City</label>
+      <label class="ck" title="Start goes fullscreen; F also toggles it"><input type="checkbox" id="full"><span class="bx" aria-hidden="true"></span>Fullscreen <span class="k1">[F]</span></label>
+      <label class="ck" title="Dark scanlines and a slight softening on the picture. Off is the original picture."><input type="checkbox" id="crt"><span class="bx" aria-hidden="true"></span>CRT Scanlines</label>
+    </div>
+    <div id="status" role="status"></div>
+  </section>
+
+
+  <section class="nfo box red" aria-labelledby="nfo-t">
+    <span class="t" id="nfo-t"><span class="i">I</span>nfo</span>
+    <dl class="nfo">
+      <dt>Group</dt><dd>Future Crew</dd>
+      <dt>Release</dt><dd>7 October 1993</dd>
+      <dt>Party</dt><dd>Won Assembly'93</dd>
+      <dt>Sound</dt><dd>Sound Blaster, SB Pro or Gravis&nbsp;UltraSound</dd>
+    </dl>
+    <p class="note">The original SECOND.EXE and REALITY.FC, served unmodified, translated instruction by instruction to WebAssembly.</p>
+    <p class="note"><span class="c1">Smooth City</span> is an optional enhancement of the city flythrough: the camera animation interpolated to 70 frames per second, with sub-pixel polygon edges. Off by default; off is the original.</p>
+  </section>
 </main>
+
+<div class="bar foot">
+  <span><span class="hi">F</span> Fullscreen</span>
+  <span class="wide"><span class="hi">Esc</span> Leave fullscreen</span>
+  <span class="sp"></span>
+</div>
+<script src="../../assets/bbs.js"></script>
 <script>
   /* The demo this page plays; web/unreal_web.js takes anything left out from
      Unreal's defaults. The section is the DOS command tail (UNREAL_ARGS):
