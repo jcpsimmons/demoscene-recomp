@@ -198,6 +198,10 @@
     const compile = async () => {
       const r = await fetch(wasmUrl);
       if (!r.ok) throw new Error(wasmUrl + ": " + r.status);
+      /* the engine build's fingerprint, for the screenshots' metadata: the
+         SHA-256 of these exact bytes (a copy of the response, off the path) */
+      if (crypto && crypto.subtle) r.clone().arrayBuffer().then((b) => crypto.subtle.digest("SHA-256", b))
+        .then((h) => { wasmSha = [...new Uint8Array(h)].map((x) => x.toString(16).padStart(2, "0")).join(""); }).catch(() => {});
       if (WebAssembly.compileStreaming && /application\/wasm/.test(r.headers.get("Content-Type") || ""))
         return WebAssembly.compileStreaming(r);
       return WebAssembly.compile(await r.arrayBuffer());
@@ -219,6 +223,94 @@
   let runGen = 0;                      /* which press of Start the run belongs to */
   let queue = [], painted = 0, dropped = 0, framesSeen = 0, ended = false, t0 = 0, running = false;
   let lastT = 0, lastD = 0;            /* the newest frame's start and length, demo seconds */
+
+  /* ---- pause and screenshot ------------------------------------------
+   * A tap (click) on the picture pauses: the engine stops stepping (the
+   * worker's "pause"), the sound context is suspended - so the pinned clock
+   * stops with it and picture and sound resume together - and the picture
+   * keeps the last frame shown. A second tap plays. While paused an overlay
+   * lies over the picture with a camera button in its lower right: it saves
+   * the frame on screen as a PNG at the demo's own resolution (320x200, or
+   * whatever the frame is), the exact VGA colours (a palette per row where
+   * the frame has one), with text metadata: the demo, the engine build (the
+   * SHA-256 of the wasm file running), the frame number and its demo time. */
+  let paused = false, shown = null, wasmSha = "";
+  const overlay = document.createElement("div");
+  overlay.className = "pause-ui"; overlay.hidden = true;
+  overlay.innerHTML = '<div class="pause-mark" aria-hidden="true">&#10074;&#10074;</div>' +
+    '<button type="button" class="shot" title="Save this frame as a PNG at the demo\'s own resolution" aria-label="Save screenshot">' +
+    '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M9 4 7.2 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.2L15 4H9zm3 5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>' +
+    '</button>';
+  let resuming = false;
+  function setPaused(on) {
+    if (on === paused || resuming) return;
+    if (on && (!running || ended)) return;
+    /* RESUME waits for the sound to be running again before the picture and
+       the engine move: until then the audio clock is still stopped (and its
+       output timestamp stale), and a picture restarted early jumps ahead -
+       about 20 frames - to catch a clock that had not restarted yet */
+    if (!on && audio && audio.state === "suspended") {
+      resuming = true;
+      audio.resume().catch(() => {}).then(() => { resuming = false; lastTs = 0; unpause(); });
+      return;
+    }
+    if (!on) { unpause(); return; }
+    paused = true;
+    if (worker) worker.postMessage({ type: "pause", on: true });
+    if (audio && audio.state === "running") { try { audio.suspend().catch(() => {}); } catch (x) {} }
+    pausedAt = performance.now();
+    overlay.hidden = false;
+    status.textContent = `paused at frame ${shown ? shown.n : framesSeen} - tap the picture to play`;
+  }
+  function unpause() {
+    if (!paused) return;
+    paused = false;
+    if (pinP < 0) t0 += performance.now() - pausedAt;          /* before the first pin, wall time paces */
+    if (worker) worker.postMessage({ type: "pause", on: false });
+    overlay.hidden = true;
+  }
+  let pausedAt = 0;
+  /* a PNG with tEXt chunks: CRC-32 over chunk type + data */
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function pngText(png, fields) {
+    const enc = new TextEncoder(), parts = [png.subarray(0, 33)];       /* signature + IHDR */
+    for (const [k, v] of Object.entries(fields)) {
+      const data = enc.encode(k + "\0" + v), chunk = new Uint8Array(12 + data.length), dv = new DataView(chunk.buffer);
+      dv.setUint32(0, data.length); chunk.set(enc.encode("tEXt"), 4); chunk.set(data, 8);
+      let c = 0xFFFFFFFF; for (let i = 4; i < 8 + data.length; i++) c = CRC[(c ^ chunk[i]) & 255] ^ (c >>> 8);
+      dv.setUint32(8 + data.length, (c ^ 0xFFFFFFFF) >>> 0); parts.push(chunk);
+    }
+    parts.push(png.subarray(33));
+    return new Blob(parts, { type: "image/png" });
+  }
+  async function screenshot() {
+    const f = shown; if (!f) return;
+    const w = f.w || 320, h = f.h || 200, c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const x = c.getContext("2d"), img = x.createImageData(w, h), d = img.data, pal = f.pal, rowed = pal.length > 768;
+    for (let i = 0, o = 0; i < w * h; i++, o += 4) {
+      const p = f.idx[i] * 3 + (rowed ? Math.floor(i / w) * 768 : 0);
+      d[o] = (pal[p] << 2) | (pal[p] >> 4); d[o + 1] = (pal[p + 1] << 2) | (pal[p + 1] >> 4); d[o + 2] = (pal[p + 2] << 2) | (pal[p + 2] >> 4); d[o + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    const blob = await new Promise((res) => c.toBlob(res, "image/png"));
+    const demo = (CFG.factory || "createUnreal").replace(/^create/, "").toLowerCase();
+    const exe = String(CFG.exe || "").split("/").pop();
+    const meta = {
+      Title: `${document.title} - frame ${f.n}`,
+      Software: "demoscene-recomp (recompiled to WebAssembly)",
+      Source: `${exe}, engine ${String(CFG.wasm || CFG.engine.replace(/\.js$/, ".wasm")).split("/").pop()} sha256:${wasmSha || "unknown"}`,
+      Comment: `frame ${f.n}, demo time ${f.t.toFixed(6)} s, ${w}x${h}` + (location.search ? `, options ${location.search}` : ""),
+      URL: location.href.split("#")[0],
+      "Creation Time": new Date().toISOString(),
+    };
+    const out = pngText(new Uint8Array(await blob.arrayBuffer()), meta);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(out); a.download = `${demo}-frame${String(f.n).padStart(6, "0")}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+  overlay.querySelector(".shot").addEventListener("click", (e) => { e.stopPropagation(); screenshot().catch((x) => console.error(x)); });
   /* fps: what is PAINTED per second (what the viewer sees) and what the engine
      produces per second (70.086 when it keeps up), over a one-second window */
   let fpsAt = 0, fpsPainted = 0, fpsSeen = 0, fpsShown = 0, engShown = 0;
@@ -267,6 +359,7 @@
 
   function tick(ts) {
     if (!running) return;
+    if (paused) { lastTs = 0; rafId = requestAnimationFrame(tick); return; }   /* the last picture stays up */
     if (lastTs && ts > lastTs && ts - lastTs < 100) refreshMs = refreshMs * 0.9 + (ts - lastTs) * 0.1;
     lastTs = ts;
     const due = timeAt(ts + refreshMs);              /* the demo time this refresh will show */
@@ -280,7 +373,7 @@
     /* hideText: the BIOS text page (the setup screen, rasterised 640x400)
        is not shown - the screen stays black until the demo's first picture */
     if (show && CFG.hideText && show.w === 640 && show.h === 400) show = null;
-    if (show) { paint(show); painted++; if (vfs.active) vfs.push(); }
+    if (show) { paint(show); painted++; shown = show; if (vfs.active) vfs.push(); }
     if (!checkDone) {
       if (show) { if (holdN) holds[holdN] = (holds[holdN] || 0) + 1; holdN = 1; if (!holdStart) holdStart = ts; }
       else if (holdN) holdN++;
@@ -304,7 +397,8 @@
      opened once by the first gesture and stays open; only a run that is
      already loading is abandoned by the generation check after each await. */
   function stopRun() {
-    running = false; ended = false;
+    setPaused(false);
+    running = false; ended = false; shown = null;
     if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
     if (worker) { worker.terminate(); worker = null; }
     if (worklet) { try { worklet.port.onmessage = null; worklet.disconnect(); } catch (x) {} worklet = null; }
@@ -429,7 +523,20 @@
     if (CFG.liveKeys) startBtn.blur();             /* Enter is the demo's now, not a second Start */
     start().catch((e) => { status.textContent = String(e); console.error(e); });
   });
-  stage.addEventListener("click", () => { if (stage.classList.contains("max")) { stage.classList.remove("max"); fsChanged(); } });
+  /* a tap on the picture pauses or plays (pause and screenshot, above); the
+     laid-over stage (no Fullscreen API) is left by F, the checkbox, or the
+     overlay's close button while paused */
+  (stage.querySelector(".tube") || stage).appendChild(overlay);   /* on the picture itself, also in fullscreen */
+  const closeMax = document.createElement("button");
+  closeMax.type = "button"; closeMax.className = "unmax"; closeMax.title = "Leave the full-window view"; closeMax.setAttribute("aria-label", "Leave the full-window view");
+  closeMax.innerHTML = "&#10005;";
+  closeMax.addEventListener("click", (e) => { e.stopPropagation(); stage.classList.remove("max"); fsChanged(); });
+  overlay.appendChild(closeMax);
+  stage.addEventListener("click", (e) => {
+    if (e.target.closest && e.target.closest(".shot, .unmax")) return;
+    if (running && !ended) setPaused(!paused);
+    else if (stage.classList.contains("max")) { stage.classList.remove("max"); fsChanged(); }
+  });
   /* LIVE KEYS (CFG.liveKeys: an engine with unreal_key - Crystal Dream 2, whose
      end menu is driven by arrows and Enter). While a run is going, a key the
      table below knows goes to the engine as the BIOS code AH scan, AL ASCII

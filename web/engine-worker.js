@@ -100,7 +100,11 @@ function dueTime() {
    audio output latency too, or the worklet's queue runs dry and the pinned
    clock stalls: a demo whose frames cost more (Panic at 175M) sets a larger
    one. The page's queue holds 12 frames, so LEAD stays well under that. */
-function wantMore() { return recent.length < LEAD || recent[0] <= dueTime(); }
+/* PAUSE ({type:"pause", on}): no stepping while paused; on resuming, the
+   clock's extrapolation (and the pre-pin wall clock) restart from the moment
+   of the resume, so the demo carries on from where it stopped. */
+let paused = false, pausedAt = 0;
+function wantMore() { return !paused && (recent.length < LEAD || recent[0] <= dueTime()); }
 
 function run() {
   if (ended) return;
@@ -116,6 +120,12 @@ onmessage = async (e) => {
   const m = e.data;
   if (m.type === "clock") { clockT = m.t; clockAt = performance.now(); return; }
   if (m.type === "key") { if (M && M._unreal_key && !ended) M._unreal_key(m.code); return; }
+  if (m.type === "pause") {
+    const now = performance.now();
+    if (m.on && !paused) { paused = true; pausedAt = now; }
+    else if (!m.on && paused) { paused = false; t0 += now - pausedAt; clockAt += now - pausedAt; }
+    return;
+  }
   if (m.type === "load") {
     const engine = m.engine || "../build/wasm/unreal.js";
     importScripts(m.engineUrl || engine);

@@ -9,6 +9,7 @@ Classic PC demoscene productions running natively in the browser.
 | [Unreal](https://treylorswift.github.io/demoscene-recomp/web/unreal/) (v1.0) | Future Crew | 1992 |
 | [Second Reality](https://treylorswift.github.io/demoscene-recomp/web/second/) | Future Crew | 1993 |
 | [Crystal Dream 2](https://treylorswift.github.io/demoscene-recomp/web/cd2/) | Triton | 1993 |
+| [Stars: Wonders of the World](https://treylorswift.github.io/demoscene-recomp/web/stars/) | NoooN | 1995 |
 
 ## What this is
 
@@ -25,7 +26,7 @@ in your browser:
    interrupt, port access and frame at the same moment of emulated time.
 
 The demos' own loaders, music players and effects all run as they did in
-1992 and 1993; only the hardware is modelled.
+1992 to 1995; only the hardware is modelled.
 
 The demos ran on VGA at 70 Hz, so they look smoothest on a display running
 at 70 Hz, or at 140 Hz or higher.
@@ -40,13 +41,15 @@ at 70 Hz, or at 140 Hz or higher.
 - **CRT Scanlines** - dark scanlines and a slight softening on the picture.
   Off is the original picture.
 - **The end menu** (Crystal Dream 2) is interactive: arrow keys and Enter.
+- **Pause** - tap or click the picture; while paused, the camera button saves
+  the frame as a PNG at the demo's own resolution.
 - **Site style** (the menu at the top right) - Retro or Modern.
 
 ## Credits
 
 Unreal and Second Reality are by [Future Crew](https://en.wikipedia.org/wiki/Future_Crew),
-Crystal Dream 2 is by [Triton](https://en.wikipedia.org/wiki/Triton_(demogroup));
-all were released as freeware. The original release files are served
+Crystal Dream 2 is by [Triton](https://en.wikipedia.org/wiki/Triton_(demogroup)),
+Stars: Wonders of the World is by NoooN; all were released as freeware. The original release files are served
 unmodified, as the demos read them at run time.
 
 The site's text font is IBM VGA 8x16 by VileR, int10h.org (CC BY-SA 4.0).
