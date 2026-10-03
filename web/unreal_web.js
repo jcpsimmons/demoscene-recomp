@@ -3,18 +3,40 @@
  *
  *   PAINTS  the newest frame that is due, dropping older ones - the same rule
  *           as present.c: never show a frame late. WebGL does the palette
- *           lookup (a 320x200 index texture and a 256x1 palette texture), so
+ *           lookup (a 320x200 index texture and a 256x1 palette texture - 256 x rows
+ *           when a frame carries a palette per row), so
  *           painting costs one small upload, not a 64,000-pixel JS loop.
  *   SOUNDS  the driver's own 8-bit DAC output through an AudioWorklet. The
- *           worklet pins where the sound IS - "at audio time T it was at frame
+ *           worklet pins where the sound IS - "at audio time T it was at demo time
  *           P" - and the picture's continuous clock is offset by that pin, so
  *           a demo frame is shown when its own sound plays. That is what keeps
  *           picture and music together, whatever the load time was.
  */
 "use strict";
 (() => {
-  const FRAME_HZ = 70.086;
-  const W = 320, H = 200;
+  /* WHERE THE HOST IS: this script, the worker and the worklet sit together
+     in web/, and every demo's page in a folder below it (web/unreal/,
+     web/second/, web/cd2/), so the host's own files are found beside THIS
+     script, not beside the page. */
+  const HOST = new URL(".", document.currentScript.src);
+  /* WHICH DEMO: the page sets window.DEMO before this script (see
+     web/<demo>/index.html), its URLs relative to the page; anything it leaves
+     out is Unreal's (the defaults below are relative to this script). */
+  const CFG = Object.assign({
+    exe: new URL("../original/v10/UNREAL.EXE", HOST).href,
+    engine: new URL("../build/wasm/unreal.js", HOST).href, factory: "createUnreal",
+    env: { UNREAL_BYTECLOCK: "1", UNREAL_KEYS: "right,down,down,enter", UNREAL_CPUBPS: "21450000", UNREAL_IONS: "68", UNREAL_QUIET: "1",
+           UNREAL_FASTPARTS: "8" },           /* the World Vector on an 8x CPU (NOTES 57) */
+    audioRate: 20000,                         /* what the setup keystrokes select */
+    settle: 0, setupMax: 400,                 /* engine-worker.js: waiting for the driver's rate */
+    lead: 18,                                 /* engine-worker.js: frames computed ahead of the clock
+                                                 (~250 ms: room for output latency and a busy browser) */
+  }, window.DEMO || {});
+  /* the engine's glue is also loaded by the worker, which resolves a relative
+     URL against ITS script (web/), so it is made absolute here */
+  CFG.engine = new URL(CFG.engine, location.href).href;
+  if (CFG.wasm) CFG.wasm = new URL(CFG.wasm, location.href).href;
+  let W = 320, H = 200;                       /* the picture's size; a text page is 640x400 */
   const canvas = document.getElementById("screen");
   const status = document.getElementById("status");
   const startBtn = document.getElementById("start");
@@ -25,7 +47,7 @@
   if (gl) {
     const vs = "attribute vec2 p; varying vec2 t; void main(){ t = vec2(p.x*0.5+0.5, 0.5-p.y*0.5); gl_Position = vec4(p,0.,1.); }";
     const fs = "precision mediump float; varying vec2 t; uniform sampler2D idx, pal;" +
-               "void main(){ float i = texture2D(idx, t).r; gl_FragColor = texture2D(pal, vec2((i*255.0+0.5)/256.0, 0.5)); }";
+               "void main(){ float i = texture2D(idx, t).r; gl_FragColor = texture2D(pal, vec2((i*255.0+0.5)/256.0, t.y)); }";
     const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
     const prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs));
@@ -42,23 +64,38 @@
     };
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     tex(0, W, H); gl.uniform1i(gl.getUniformLocation(prog, "idx"), 0);
+    let texW = W, texH = H;
     const palT = gl.createTexture(); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, palT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.uniform1i(gl.getUniformLocation(prog, "pal"), 1);
-    const pal8 = new Uint8Array(256 * 3);
+    /* the palette texture is 256 x rows: one row, or one per picture row (a
+       frame whose palette changed while the beam drew it) */
+    let pal8 = new Uint8Array(256 * 3);
     paint = (f) => {
-      for (let i = 0; i < 768; i++) pal8[i] = (f.pal[i] << 2) | (f.pal[i] >> 4);   /* VGA 6-bit -> 8 */
-      gl.activeTexture(gl.TEXTURE1); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 256, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pal8);
-      gl.activeTexture(gl.TEXTURE0); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, W, H, gl.LUMINANCE, gl.UNSIGNED_BYTE, f.idx);
+      const n = f.pal.length;
+      if (pal8.length !== n) pal8 = new Uint8Array(n);
+      for (let i = 0; i < n; i++) pal8[i] = (f.pal[i] << 2) | (f.pal[i] >> 4);   /* VGA 6-bit -> 8 */
+      gl.activeTexture(gl.TEXTURE1); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 256, n / 768, 0, gl.RGB, gl.UNSIGNED_BYTE, pal8);
+      gl.activeTexture(gl.TEXTURE0);
+      const fw = f.w || 320, fh = f.h || 200;
+      if (fw !== texW || fh !== texH) {          /* a text page and back: the canvas takes its size */
+        texW = W = fw; texH = H = fh; canvas.width = W; canvas.height = H; gl.viewport(0, 0, W, H);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, W, H, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, f.idx);
+      } else gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, W, H, gl.LUMINANCE, gl.UNSIGNED_BYTE, f.idx);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };
   } else {
-    const ctx2d = canvas.getContext("2d"), image = ctx2d.createImageData(W, H);
+    const ctx2d = canvas.getContext("2d");
+    let image = ctx2d.createImageData(W, H);
     paint = (f) => {
-      const d = image.data, pal = f.pal, idx = f.idx;
+      const fw = f.w || 320, fh = f.h || 200;
+      if (fw !== image.width || fh !== image.height) {
+        W = fw; H = fh; canvas.width = W; canvas.height = H; image = ctx2d.createImageData(W, H);
+      }
+      const d = image.data, pal = f.pal, idx = f.idx, rowed = pal.length > 768;
       for (let i = 0, o = 0; i < W * H; i++, o += 4) {
-        const p = idx[i] * 3;
+        const p = idx[i] * 3 + (rowed ? Math.floor(i / W) * 768 : 0);
         d[o] = (pal[p] << 2) | (pal[p] >> 4); d[o + 1] = (pal[p + 1] << 2) | (pal[p + 1] >> 4); d[o + 2] = (pal[p + 2] << 2) | (pal[p + 2] >> 4); d[o + 3] = 255;
       }
       ctx2d.putImageData(image, 0, 0);
@@ -131,33 +168,47 @@
 
   /* ---- PRELOAD, from page load -------------------------------------------
    * Everything that does not depend on the choices made at Start: the exe,
-   * the engine's glue script (as a blob URL, so every worker gets it without
-   * a refetch) and its wasm, COMPILED (a WebAssembly.Module can be handed to
+   * every file the page names (CFG.files, and CFG.preload - URLs that an
+   * option may add to CFG.files later, such as the smooth city's data), the
+   * engine's glue script (as a blob URL, so every worker gets it without a
+   * refetch) and its wasm, COMPILED (a WebAssembly.Module can be handed to
    * any worker). Instantiating waits for Start: the engine's environment -
-   * the section - is fixed by its C constructors. A Restart reuses all of it.
-   * Start stays disabled, as "Loading..", until this is done. */
-  const EXE_URL = "../original/v10/UNREAL.EXE";
-  const ENGINE_URL = "../build/wasm/unreal.js", WASM_URL = "../build/wasm/unreal.wasm";
-  let pre = null;                               /* { exe, module, engineUrl } once loaded */
+   * the section, the options - is fixed by its C constructors. A Restart
+   * reuses all of it. Start stays disabled, as "Loading..", until this is done. */
+  const cache = new Map();                      /* URL -> ArrayBuffer (kept; each run gets a copy) */
+  let pre = null;                               /* { module, engineUrl } once loaded */
   let spare = null;                             /* a worker with the glue already loaded */
+  async function fetchBuf(u) {
+    if (cache.has(u)) return cache.get(u);
+    const r = await fetch(u);
+    if (!r.ok) throw new Error(u + ": " + r.status);
+    const b = await r.arrayBuffer();
+    cache.set(u, b);
+    return b;
+  }
   function warmWorker() {
-    const w = new Worker("engine-worker.js");
-    w.postMessage({ type: "load", engineUrl: pre.engineUrl, module: pre.module });
+    const w = new Worker(new URL("engine-worker.js", HOST));
+    w.postMessage({ type: "load", engineUrl: pre.engineUrl, engine: CFG.engine, module: pre.module });
     return w;
   }
+  const wasmUrl = CFG.wasm || CFG.engine.replace(/\.js$/, ".wasm");
   startBtn.disabled = true; startBtn.textContent = "Loading..";
   (async () => {
-    const get = async (u) => { const r = await fetch(u); if (!r.ok) throw new Error(u + ": " + r.status); return r; };
+    const urls = [CFG.exe].concat(Object.values(CFG.files || {}), CFG.preload || []);
     const compile = async () => {
-      const r = await get(WASM_URL);
+      const r = await fetch(wasmUrl);
+      if (!r.ok) throw new Error(wasmUrl + ": " + r.status);
       if (WebAssembly.compileStreaming && /application\/wasm/.test(r.headers.get("Content-Type") || ""))
         return WebAssembly.compileStreaming(r);
       return WebAssembly.compile(await r.arrayBuffer());
     };
-    const glue = async () => URL.createObjectURL(new Blob([await (await get(ENGINE_URL)).text()], { type: "text/javascript" }));
-    const exeBuf = async () => (await get(EXE_URL)).arrayBuffer();
-    const [module, engineUrl, exe] = await Promise.all([compile(), glue(), exeBuf()]);
-    pre = { exe, module, engineUrl };
+    const glue = async () => {
+      const r = await fetch(CFG.engine);
+      if (!r.ok) throw new Error(CFG.engine + ": " + r.status);
+      return URL.createObjectURL(new Blob([await r.text()], { type: "text/javascript" }));
+    };
+    const [module, engineUrl] = await Promise.all([compile(), glue()].concat(urls.map(fetchBuf)));
+    pre = { module, engineUrl };
     spare = warmWorker();
     startBtn.textContent = "Start"; startBtn.disabled = false;
   })().catch((e) => { status.textContent = "preload failed: " + (e && e.message || e); console.error(e); });
@@ -167,6 +218,7 @@
   let moduleFor = null;                /* the context the worklet module was added to */
   let runGen = 0;                      /* which press of Start the run belongs to */
   let queue = [], painted = 0, dropped = 0, framesSeen = 0, ended = false, t0 = 0, running = false;
+  let lastT = 0, lastD = 0;            /* the newest frame's start and length, demo seconds */
   /* fps: what is PAINTED per second (what the viewer sees) and what the engine
      produces per second (70.086 when it keeps up), over a one-second window */
   let fpsAt = 0, fpsPainted = 0, fpsSeen = 0, fpsShown = 0, engShown = 0;
@@ -180,9 +232,14 @@
    * jittered the picture. The decision is made for the instant the NEXT
    * refresh reaches the screen, not "now".
    *
-   * The constant: the worklet's pin, "at audio time T the sound was at frame
-   * P", captured as one pair inside the worklet. Frame position at any
-   * instant is P + (audioTime - T) * 70.086. Consecutive pins agree to the
+   * The constant: the worklet's pin, "at audio time T the sound was at demo
+   * time P", captured as one pair inside the worklet. The demo's position at
+   * any instant is P + (audioTime - T), in demo SECONDS - not frames, since a
+   * demo may change its frame length (Panic's 466-line frames); each frame
+   * carries its own start time t, and the frame shown is the newest whose t
+   * has come. With every frame 1/70.086 s (Unreal: t = n / 70.086) that is
+   * exactly the old rule, frame n shown once P + (audioTime - T) * 70.086
+   * reaches n. Consecutive pins agree to the
    * sample, so a new one changes nothing unless the sound actually stalled -
    * which is the one time the offset should change. Before the first pin
    * (the silent setup screens), wall time from the start paces things, and
@@ -190,6 +247,7 @@
   let refreshMs = 1000 / 60, lastTs = 0;
   let rafId = 0;                       /* the pending tick, cancelled on restart */
   let pinP = -1, pinT = 0;
+  let underruns = 0;                   /* render quanta the worklet found empty after the sound began */
   function audioTimeAt(perfMs) {
     if (audio.getOutputTimestamp) {
       const ts = audio.getOutputTimestamp();
@@ -198,11 +256,10 @@
     }
     return audio.currentTime + (perfMs - performance.now()) / 1000;
   }
-  function frameAt(perfMs) {
-    if (pinP >= 0 && audio) return pinP + (audioTimeAt(perfMs) - pinT) * FRAME_HZ;
-    return (perfMs - t0) / 1000 * FRAME_HZ;
+  function timeAt(perfMs) {
+    if (pinP >= 0 && audio) return pinP + (audioTimeAt(perfMs) - pinT);
+    return (perfMs - t0) / 1000;
   }
-  function dueFrameAt(perfMs) { return Math.floor(frameAt(perfMs)); }
 
   /* a check, console only: over the first 10 s, how many refreshes each
      painted frame stayed up - at 144 Hz it should be 2s and 3s, nothing else */
@@ -212,14 +269,17 @@
     if (!running) return;
     if (lastTs && ts > lastTs && ts - lastTs < 100) refreshMs = refreshMs * 0.9 + (ts - lastTs) * 0.1;
     lastTs = ts;
-    const due = dueFrameAt(ts + refreshMs);          /* what this refresh will show */
+    const due = timeAt(ts + refreshMs);              /* the demo time this refresh will show */
     /* the worker paces against the RENDER side of the audio (the sample the
        worklet is taking now), not what is heard: they differ by the output
        latency, which reached 48-60 ms with Chrome 154 and starved a short
        lead. The picture still follows what is heard. */
-    if (worker) worker.postMessage({ type: "clock", frame: (pinP >= 0 && audio) ? pinP + (audio.currentTime - pinT) * FRAME_HZ : frameAt(performance.now()) });
+    if (worker) worker.postMessage({ type: "clock", t: (pinP >= 0 && audio) ? pinP + (audio.currentTime - pinT) : timeAt(performance.now()) });
     let show = null;
-    while (queue.length && queue[0].n <= due) { if (show) dropped++; show = queue.shift(); }
+    while (queue.length && queue[0].t <= due) { if (show) dropped++; show = queue.shift(); }
+    /* hideText: the BIOS text page (the setup screen, rasterised 640x400)
+       is not shown - the screen stays black until the demo's first picture */
+    if (show && CFG.hideText && show.w === 640 && show.h === 400) show = null;
     if (show) { paint(show); painted++; if (vfs.active) vfs.push(); }
     if (!checkDone) {
       if (show) { if (holdN) holds[holdN] = (holds[holdN] || 0) + 1; holdN = 1; if (!holdStart) holdStart = ts; }
@@ -233,7 +293,7 @@
         engShown = (framesSeen - fpsSeen) * 1000 / (now - fpsAt);
       }
       fpsAt = now; fpsPainted = painted; fpsSeen = framesSeen;
-      status.textContent = `${fpsShown.toFixed(1)} fps  (engine ${engShown.toFixed(1)}/s, display ${(1000 / refreshMs).toFixed(0)} Hz)  frame ${framesSeen}  dropped ${dropped}  behind ${Math.max(0, due - framesSeen)}` + (ended ? "  (ended)" : "");
+      status.textContent = `${fpsShown.toFixed(1)} fps  (engine ${engShown.toFixed(1)}/s, display ${(1000 / refreshMs).toFixed(0)} Hz)  frame ${framesSeen}  dropped ${dropped}  behind ${lastD > 0 ? Math.max(0, Math.floor((due - lastT) / lastD)) : 0}` + (underruns ? `  underruns ${underruns}` : "") + (ended ? "  (ended)" : "");
     }
     if (!ended || queue.length) rafId = requestAnimationFrame(tick);
   }
@@ -241,17 +301,15 @@
   /* Start is also Restart: a press while a run is going stops it (the worker
      is terminated, the worklet disconnected) and begins a new one with the
      section and multiplier selected now. The AudioContext is kept - it was
-     opened once by the first gesture and stays open. The new run gets the
-     preloaded exe and compiled module (a fresh worker is given them), so a
-     Restart downloads nothing; a stopped worker's late messages are dropped
-     by the w !== worker check. */
+     opened once by the first gesture and stays open; only a run that is
+     already loading is abandoned by the generation check after each await. */
   function stopRun() {
     running = false; ended = false;
     if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
     if (worker) { worker.terminate(); worker = null; }
     if (worklet) { try { worklet.port.onmessage = null; worklet.disconnect(); } catch (x) {} worklet = null; }
-    pcmRate = 0; pinP = -1; pinT = 0;
-    queue = []; painted = 0; dropped = 0; framesSeen = 0; t0 = 0;
+    pcmRate = 0; pinP = -1; pinT = 0; underruns = 0;
+    queue = []; painted = 0; dropped = 0; framesSeen = 0; t0 = 0; lastT = lastD = 0;
     fpsAt = fpsPainted = fpsSeen = 0; fpsShown = engShown = 0; lastTs = 0;
     holds = {}; holdN = 0; holdStart = 0; checkDone = false;
   }
@@ -259,25 +317,30 @@
   async function start() {
     if (!pre) return;                              /* still preloading: Start is disabled */
     stopRun();
-    ++runGen;
+    const gen = ++runGen;
     /* opened once, in the click itself (so the gesture counts), at the 20 kHz
        the setup keystrokes always select - a second open at "ready" was a
        device re-open, and with the pinned clock the open time no longer matters */
-    if (!audio || audio.state === "closed") audio = new AudioContext({ sampleRate: 20000 });
+    if (!audio || audio.state === "closed") audio = new AudioContext({ sampleRate: CFG.audioRate });
     const w = spare || warmWorker();
     spare = null;
     worker = w;
-    const section = document.getElementById("section").value;
+    const sel = document.getElementById("section"), section = sel ? sel.value : "";
     status.textContent = "starting the engine...";
-    const exe = pre.exe.slice(0);                  /* a copy: it is transferred to the worker */
-    const env = { UNREAL_BYTECLOCK: "1", UNREAL_KEYS: "right,down,down,enter", UNREAL_CPUBPS: "21450000", UNREAL_IONS: "68", UNREAL_QUIET: "1" };
+    /* the exe and, for a demo that opens files next to it (CFG.files:
+       {DOS name: URL}), those - preloaded; a copy each, since they are
+       transferred to the worker */
+    const names = Object.keys(CFG.files || {});
+    const got = await Promise.all([CFG.exe].concat(names.map((k) => CFG.files[k])).map(fetchBuf));
+    if (gen !== runGen) return;
+    const exe = got[0].slice(0), files = names.map((name, i) => ({ name, data: got[i + 1].slice(0) }));
+    const env = Object.assign({}, CFG.env);
     if (section) env.UNREAL_ARGS = section;
-    env.UNREAL_FASTPARTS = "8";                  /* the World Vector on an 8x CPU (NOTES 57) */
     w.onmessage = async (e) => {
       if (w !== worker) return;                     /* a run that was stopped */
       const m = e.data;
-      if (m.type === "frame") { queue.push(m); framesSeen = m.n; if (queue.length > 32) { queue.splice(0, queue.length - 32); dropped++; } }
-      else if (m.type === "pcm") { if (worklet) worklet.port.postMessage({ samples: m.samples, n: m.n }, [m.samples.buffer]); }
+      if (m.type === "frame") { queue.push(m); framesSeen = m.n; lastT = m.t; lastD = m.d; if (queue.length > 32) { queue.splice(0, queue.length - 32); dropped++; } }
+      else if (m.type === "pcm") { if (worklet) worklet.port.postMessage({ samples: m.samples, t: m.t, d: m.d }, [m.samples.buffer]); }
       else if (m.type === "ready") {
         pcmRate = m.pcmRate;
         if (pcmRate) {
@@ -286,12 +349,12 @@
             try { audio.close(); } catch (x) {}
             audio = ac;
           }
-          if (moduleFor !== audio) { await audio.audioWorklet.addModule("pcm-worklet.js"); moduleFor = audio; }
+          if (moduleFor !== audio) { await audio.audioWorklet.addModule(new URL("pcm-worklet.js", HOST).href); moduleFor = audio; }
           if (w !== worker) return;
           worklet = new AudioWorkletNode(audio, "pcm-queue");
           worklet.connect(audio.destination);
           const node = worklet;              /* a stopped run's pins, still queued, are dropped */
-          node.port.onmessage = (ev) => { if (node === worklet) { pinP = ev.data.frame; pinT = ev.data.t; } };
+          node.port.onmessage = (ev) => { if (node === worklet) { pinP = ev.data.time; pinT = ev.data.t; underruns = ev.data.under || 0; } };
         }
         t0 = performance.now(); running = true;
         status.textContent = "running" + (gl ? " (WebGL)" : " (2D)");
@@ -300,7 +363,9 @@
       else if (m.type === "ended") { ended = true; status.textContent = "the demo has ended"; }
       else if (m.type === "error") { ended = true; status.textContent = "engine stopped: " + m.rc; }
     };
-    w.postMessage({ type: "init", exe, env }, [exe]);
+    w.postMessage({ type: "init", exe, files, env, engine: CFG.engine, factory: CFG.factory,
+                    settle: CFG.settle, setupMax: CFG.setupMax, lead: CFG.lead, openRate: CFG.openRate, gapFill: CFG.gapFill },
+                  [exe].concat(files.map((f) => f.data)));
   }
 
 
@@ -308,10 +373,10 @@
      to 4:3 inside it (a fullscreen element itself is forced to fill the
      screen). It is a CHECKBOX, remembered: checked, Start goes fullscreen
      FIRST, synchronously in the click - browsers allow it only inside the
-     gesture - and the stage shows black until the first picture. Toggling it
-     while a run is going enters or leaves at once; leaving by any other way
-     (Esc, the player's close button, a tap on the laid-over stage, F)
-     unchecks it. F toggles.
+     gesture, and Start then awaits - and the stage shows black until the
+     first picture. Toggling it while a run is going enters or leaves at once;
+     leaving by any other way (Esc, the player's close button, a tap on the
+     laid-over stage, F) unchecks it. F toggles.
      Where there is no Fullscreen API (iPhone) the native video player takes
      the picture (vfs above); where that, or the API, is refused, the stage is
      instead laid over the whole viewport (class "max"); a tap on it, or F,
@@ -319,11 +384,12 @@
   const stage = document.getElementById("stage");
   const fullBox = document.getElementById("full");
   const fsApi = !!(stage.requestFullscreen || stage.webkitRequestFullscreen);
-  const FSKEY = "unreal.fullscreen";
+  const FSKEY = (CFG.factory || "createUnreal") + ".fullscreen";
   function isFull() {
     return vfs.active || stage.classList.contains("max") || !!(document.fullscreenElement || document.webkitFullscreenElement);
   }
   function fsChanged() {
+    if (!fullBox || fullBox.type !== "checkbox") return;
     fullBox.checked = isFull();
     try { localStorage.setItem(FSKEY, fullBox.checked ? "1" : "0"); } catch (e) {}
   }
@@ -347,21 +413,52 @@
   function toggleFullscreen() { if (isFull()) exitFullscreen(); else enterFullscreen(); }
   document.addEventListener("fullscreenchange", fsChanged);
   document.addEventListener("webkitfullscreenchange", fsChanged);
-  try { fullBox.checked = localStorage.getItem(FSKEY) === "1"; } catch (e) { fullBox.checked = false; }
-  fullBox.addEventListener("change", () => {
-    const want = fullBox.checked;
-    try { localStorage.setItem(FSKEY, want ? "1" : "0"); } catch (e) {}
-    if (!worker) return;                        /* not running: only the choice for Start */
-    if (want) enterFullscreen(); else exitFullscreen();
-  });
+  if (fullBox && fullBox.type === "checkbox") {
+    try { fullBox.checked = localStorage.getItem(FSKEY) === "1"; } catch (e) { fullBox.checked = false; }
+    fullBox.addEventListener("change", () => {
+      const want = fullBox.checked;
+      try { localStorage.setItem(FSKEY, want ? "1" : "0"); } catch (e) {}
+      if (!worker) return;                      /* not running: only the choice for Start */
+      if (want) enterFullscreen(); else exitFullscreen();
+    });
+  } else if (fullBox) fullBox.addEventListener("click", toggleFullscreen);   /* a page with the old button */
   if (vfs.on) vfs.setup();                      /* pre-rolled, so Start can enter it in the click */
   startBtn.addEventListener("click", () => {
     if (!pre) return;
-    if (fullBox.checked) enterFullscreen();     /* FIRST, before start() awaits anything */
+    if (fullBox && fullBox.type === "checkbox" && fullBox.checked) enterFullscreen();   /* FIRST, before start() awaits anything */
+    if (CFG.liveKeys) startBtn.blur();             /* Enter is the demo's now, not a second Start */
     start().catch((e) => { status.textContent = String(e); console.error(e); });
   });
   stage.addEventListener("click", () => { if (stage.classList.contains("max")) { stage.classList.remove("max"); fsChanged(); } });
-  document.addEventListener("keydown", (e) => { if (e.key === "f" || e.key === "F") { e.preventDefault(); toggleFullscreen(); } });
+  /* LIVE KEYS (CFG.liveKeys: an engine with unreal_key - Crystal Dream 2, whose
+     end menu is driven by arrows and Enter). While a run is going, a key the
+     table below knows goes to the engine as the BIOS code AH scan, AL ASCII
+     (cengine.c types it through the emulated 8042 - a press, its release
+     100 ms later) and the page does nothing else with it: no scrolling, no
+     button press. F stays the page's: it toggles fullscreen and never reaches
+     the demo (CD2's end menu uses arrows and Enter), and Tab still moves
+     the focus. Esc goes to the demo -
+     in fullscreen the browser takes it first to leave fullscreen. Keys in the
+     Section list are left to the list. Without liveKeys nothing changes. */
+  const SCAN = { Escape: 0x011B, Enter: 0x1C0D, NumpadEnter: 0x1C0D, Space: 0x3920, Backspace: 0x0E08,
+                 ArrowUp: 0x4800, ArrowDown: 0x5000, ArrowLeft: 0x4B00, ArrowRight: 0x4D00,
+                 PageUp: 0x4900, PageDown: 0x5100, Home: 0x4700, End: 0x4F00 };
+  "1234567890".split("").forEach((d, i) => { SCAN["Digit" + d] = ((i + 2) << 8) | d.charCodeAt(0); });
+  ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"].forEach((row, r) => row.split("").forEach((ch, i) => {
+    if (ch !== "F") SCAN["Key" + ch] = (([0x10, 0x1E, 0x2C][r] + i) << 8) | ch.toLowerCase().charCodeAt(0);
+  }));
+  for (let i = 1; i <= 10; i++) SCAN["F" + i] = (0x3A + i) << 8;
+  const liveKey = (e) => {
+    if (!CFG.liveKeys || !worker || ended || e.altKey || e.ctrlKey || e.metaKey) return 0;
+    if (e.target && e.target.tagName === "SELECT") return 0;
+    return SCAN[e.code] || 0;
+  };
+  document.addEventListener("keydown", (e) => {
+    const code = liveKey(e);
+    if (code) { e.preventDefault(); worker.postMessage({ type: "key", code }); return; }
+    if (e.key === "f" || e.key === "F") { e.preventDefault(); toggleFullscreen(); }
+  });
+  document.addEventListener("keyup", (e) => { if (liveKey(e)) e.preventDefault(); });   /* Space clicks on keyup */
 
   /* this was a PWA once; a Home Screen web app on iPhone never hides the
      home indicator, not even in the video player, and a Safari bookmark

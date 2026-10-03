@@ -101,6 +101,18 @@ pre.logo .bs { background: var(--ps); }
 
 /* ---- space: a starfield of CP437 characters on the 8x16 grid (bbs.js) -----
    behind everything, cut away under the text, the boxes and the picture */
+/* a turning piece of space art (bbs.js SPIN): its own layer just above the sky */
+.spinart {
+  position: absolute; z-index: -1; margin: 0; font: 1rem/1rem var(--font); white-space: pre;
+  pointer-events: none; -webkit-user-select: none; user-select: none;
+}
+/* the station in the page flow (no room in the margins: a phone) */
+#dock { text-align: center; margin: 1.2em 0 0; }
+#dock[hidden] { display: none; }
+#dock pre.spinart.docked {
+  position: static; display: inline-block; text-align: left;
+  font-size: min(1rem, calc((100vw - 32px) / 23.5)); line-height: 1;
+}
 #space {
   position: absolute; left: 0; top: 0; z-index: -1; overflow: hidden; pointer-events: none;
   margin: 0; font: 1rem/1rem var(--font); white-space: pre; color: var(--k1);

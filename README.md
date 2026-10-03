@@ -6,12 +6,13 @@ Classic PC demoscene productions running natively in the browser.
 
 | Demo | Group | Year |
 |---|---|---|
-| [Unreal](https://treylorswift.github.io/demoscene-recomp/unreal/web/) (v1.0) | Future Crew | 1992 |
-| [Second Reality](https://treylorswift.github.io/demoscene-recomp/second/web/) | Future Crew | 1993 |
+| [Unreal](https://treylorswift.github.io/demoscene-recomp/web/unreal/) (v1.0) | Future Crew | 1992 |
+| [Second Reality](https://treylorswift.github.io/demoscene-recomp/web/second/) | Future Crew | 1993 |
+| [Crystal Dream 2](https://treylorswift.github.io/demoscene-recomp/web/cd2/) | Triton | 1993 |
 
 ## What this is
 
-These are not videos and not remakes. Each demo's original DOS program runs
+Each demo's original DOS code, recompiled instruction for instruction, runs
 in your browser:
 
 1. The demo is run on an x86 emulator that records every block of code the
@@ -26,6 +27,9 @@ in your browser:
 The demos' own loaders, music players and effects all run as they did in
 1992 and 1993; only the hardware is modelled.
 
+The demos ran on VGA at 70 Hz, so they look smoothest on a display running
+at 70 Hz, or at 140 Hz or higher.
+
 ## Options on the demo pages
 
 - **Section** - start from one of the demo's own start points.
@@ -33,9 +37,16 @@ The demos' own loaders, music players and effects all run as they did in
   flythrough: the camera animation interpolated to 70 frames per second,
   with sub-pixel polygon edges. Off by default; off is the original.
 - **Fullscreen** - shown at 4:3, as a VGA monitor displayed it.
+- **CRT Scanlines** - dark scanlines and a slight softening on the picture.
+  Off is the original picture.
+- **The end menu** (Crystal Dream 2) is interactive: arrow keys and Enter.
+- **Site style** (the menu at the top right) - Retro or Modern.
 
 ## Credits
 
-Unreal and Second Reality are by [Future Crew](https://en.wikipedia.org/wiki/Future_Crew)
-and were released as freeware. The original release files are served
+Unreal and Second Reality are by [Future Crew](https://en.wikipedia.org/wiki/Future_Crew),
+Crystal Dream 2 is by [Triton](https://en.wikipedia.org/wiki/Triton_(demogroup));
+all were released as freeware. The original release files are served
 unmodified, as the demos read them at run time.
+
+The site's text font is IBM VGA 8x16 by VileR, int10h.org (CC BY-SA 4.0).

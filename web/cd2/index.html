@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="theme-color" content="#000000">
+<title>Crystal Dream 2 (1993)</title>
+<script src="../assets/fit.js"></script>
+<link rel="preload" href="../assets/Web437_IBM_VGA_8x16.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../assets/bbs.css">
+<link rel="stylesheet" href="../assets/demo.css">
+<link rel="stylesheet" href="../assets/modern.css">
+</head>
+<body>
+<div class="bar top">
+  <a href="../">&#9668; <span class="rt">MAIN MENU</span><span class="mo">demoscene-recomp</span></a>
+  <span class="sp"></span>
+  <span class="hi wide rt">demoscene-recomp BBS</span>
+  <span class="rt">NODE 1</span><span class="c rt"><span class="wide">USR HST DS V32Bis </span>38,4Kbps</span>
+  <span class="lookm"><button type="button" id="lookbtn" aria-haspopup="menu" aria-expanded="false" aria-controls="lookmenu" title="Site style">&#8801;</button><span id="lookmenu" role="menu" aria-label="Site style" hidden><span class="lh">Site style</span><button type="button" role="menuitemradio" data-look="retro">Retro</button><button type="button" role="menuitemradio" data-look="modern">Modern</button></span></span>
+</div>
+
+<main class="deck">
+  <header class="head">
+    <h1 class="sr">Crystal Dream 2 - Triton - 1993</h1>
+<pre class="logo" style="--cols: 40" aria-hidden="true"><span class="vf">      █▀▀ █▀▄ █ █ █▀▀ ▀█▀ █▀█ █</span>
+<span class="c1">      █   █▀▄ ▀█▀ ▀▀█  █  █▀█ █</span>
+<span class="v9">      ▀▀▀ ▀ ▀  ▀  ▀▀▀  ▀  ▀ ▀ ▀▀▀</span>
+<span class="vf">      █▀▄ █▀▄ █▀▀ █▀█ █▄ ▄█    █ █</span>
+<span class="c1">      █ █ █▀▄ █▀▀ █▀█ █ ▀ █    █ █</span>
+<span class="v9">      ▀▀  ▀ ▀ ▀▀▀ ▀ ▀ ▀   ▀    ▀ ▀</span>
+<span class="c1">          b y   T r i t o n</span>
+<span class="vf">┌──────────────────────────────────────┐</span>
+<span class="vf">│        The winning PC demo of        │</span>
+<span class="vf">│   ■ The Computer Crossroads 1993 ■   │</span>
+<span class="vf">└──────────────────────────────────────┘</span></pre>
+  </header>
+
+  <section class="pic win" aria-label="The demo">
+    <div id="stage"><div class="tube"><canvas id="screen" width="320" height="200"></canvas></div></div>
+  </section>
+
+  <section class="ctl box" aria-labelledby="ctl-t">
+    <span class="t" id="ctl-t"><span class="i">D</span>emo <span class="i">C</span>ontrols</span>
+    <div class="rows">
+      <button id="start" class="btn" disabled>Loading..</button>
+      <label><span class="sel">
+        <select id="section">
+          <option value="">Whole demo</option>
+          <option value="1">1 - Plasma</option>
+          <option value="2">2 - Pictures</option>
+          <option value="3">3 - End part (menu)</option>
+        </select></span><span class="lbl">Section</span>
+      </label>
+      <label class="ck" title="Start goes fullscreen; F also toggles it"><input type="checkbox" id="full"><span class="bx" aria-hidden="true"></span>Fullscreen <span class="k1">[F]</span></label>
+      <label class="ck" title="Dark scanlines and a slight softening on the picture. Off is the original picture."><input type="checkbox" id="crt"><span class="bx" aria-hidden="true"></span>CRT Scanlines</label>
+    </div>
+    <div id="status" role="status"></div>
+  </section>
+
+
+  <section class="nfo box red" aria-labelledby="nfo-t">
+    <span class="t" id="nfo-t"><span class="i">I</span>nfo</span>
+    <dl class="nfo">
+      <dt>Group</dt><dd>Triton</dd>
+      <dt>Release</dt><dd>May 1993</dd>
+      <dt>Party</dt><dd>Won The Computer Crossroads 1993 (PC demo)</dd>
+      <dt>Sound</dt><dd>Sound Blaster or Gravis&nbsp;UltraSound</dd>
+    </dl>
+    <p class="note">The original CD2.EXE, served unmodified, translated instruction by instruction to WebAssembly.</p>
+    <p class="note">The demo's own setup screen is answered for you (<span class="c1">SoundBlaster</span>, 44000 Hz). The <span class="c1">end menu</span> is interactive: <span class="c1">arrow keys</span> and <span class="c1">Enter</span> (Credits, Greetings, Information, Comments, Messages, Rumours, Quit).</p>
+  </section>
+</main>
+
+<div class="bar foot">
+  <span><span class="hi">F</span> Fullscreen</span>
+  <span><span class="hi">&#8593;&#8595;</span> <span class="hi">Enter</span> End menu</span>
+  <span class="wide"><span class="hi">Esc</span> Leave fullscreen</span>
+  <span class="sp"></span>
+</div>
+<script src="../assets/bbs.js"></script>
+<script>
+  /* The demo this page plays; web/unreal_web.js takes anything left out from
+     Unreal's defaults. The section is the DOS command tail (UNREAL_ARGS):
+     CD2's own start points (its /H text) - 1 from the plasma, 2 from the
+     pictures, 3 the end part (the interactive main menu); none is the whole
+     demo. All URLs are relative to this page, so it also works from a
+     sub-folder. */
+  const CPUBPS = 150000000;   /* the CPU speed, bytes/s: the reference video's
+                                 DX4-100, as Second Reality's (CD2.md) - the
+                                 one place to change it */
+  window.DEMO = {
+    /* CD2.EXE is the whole demo: it reads its own appended data */
+    exe: "../../original/cd2/CD2.EXE",
+    engine: "../../build/wasm/cd2.js", factory: "createCD2",
+    /* CD2's own graphical setup ("CD II Setup"), answered as the Phase 2
+       capture answered it (CD2.md): Sound Device down to SoundBlaster, Enter;
+       Mixingfreq. 44000 Hz (the first entry, already selected), Enter - held until the menus
+       are up (frames 560 and 720). The viewer's keys reach the demo only once
+       this script is typed (cengine.c). The capture's Quit is NOT here: the
+       end menu is the viewer's. */
+    env: { UNREAL_KEYS: "@560,down,enter,@720,enter", UNREAL_CPUBPS: String(CPUBPS),
+           UNREAL_VGARNS: "500", UNREAL_IONS: "68", UNREAL_QUIET: "1" },
+    /* 44000 Hz in the setup is DSP time constant 234 (measured, the reference's
+       DSP 40h): 1,000,000 / 22 = 45,454 Hz, 8-bit mono.
+       openRate: the sound opens at once at that rate (engine-worker.js), so
+       the setup screens are shown as the demo draws them rather than stepped
+       through unseen while the worker waits for the driver's rate. */
+    audioRate: 45454, openRate: 45454,
+    /* a frame with no sound (CD2 stops the card for ~0.6 s before its end
+       menu) is queued as that much silence (engine-worker.js) */
+    gapFill: true,
+    lead: 18,
+    /* hideText stays OFF: the page's rule hides every 640x400 frame (a
+       rasterised text page), and CD2's end-menu viewers are 640x400 GRAPHICS.
+       CD2's own text-mode frames are blank anyway (the boot before its first
+       mode set, frames 1-72, and the screen after its exit). */
+    hideText: false,
+    /* the end menu: arrows + Enter, through the 8042 (unreal_key) */
+    liveKeys: true,
+  };
+</script>
+<script src="../unreal_web.js"></script>
+</body>
+</html>

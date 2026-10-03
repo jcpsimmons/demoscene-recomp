@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="theme-color" content="#000000">
+<title>Second Reality (1993)</title>
+<script src="../assets/fit.js"></script>
+<link rel="preload" href="../assets/Web437_IBM_VGA_8x16.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../assets/bbs.css">
+<link rel="stylesheet" href="../assets/demo.css">
+<link rel="stylesheet" href="../assets/modern.css">
+</head>
+<body>
+<div class="bar top">
+  <a href="../">&#9668; <span class="rt">MAIN MENU</span><span class="mo">demoscene-recomp</span></a>
+  <span class="sp"></span>
+  <span class="hi wide rt">demoscene-recomp BBS</span>
+  <span class="rt">NODE 1</span><span class="c rt"><span class="wide">USR HST DS V32Bis </span>38,4Kbps</span>
+  <span class="lookm"><button type="button" id="lookbtn" aria-haspopup="menu" aria-expanded="false" aria-controls="lookmenu" title="Site style">&#8801;</button><span id="lookmenu" role="menu" aria-label="Site style" hidden><span class="lh">Site style</span><button type="button" role="menuitemradio" data-look="retro">Retro</button><button type="button" role="menuitemradio" data-look="modern">Modern</button></span></span>
+</div>
+
+<main class="deck">
+  <header class="head">
+    <h1 class="sr">Second Reality - Future Crew - 1993</h1>
+<pre class="logo" style="--cols: 41" aria-hidden="true"><span class="vf">   ▀▀▀▀█ ██▀▀█ ██▀▀▄</span>
+<span class="c1">── ██▀▀▀ ███ █ ███ █ ──R─E─A─L─I─T─Y──▄</span>
+<span class="c1">▀▀ ███ ▄ ▀▀▀   ▀▀▀▀▀ ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</span>
+<span class="v9">sp ███▄█  b y   F u t u r e   C r e w</span>
+<span class="vf">┌───────────────────────────────────────┐</span>
+<span class="vf">│  ■ The winning demo of Assembly&#x27;93 ■  │</span>
+<span class="vf">│     · SB, SB Pro and GUS support ·    │</span>
+<span class="vf">└───────────────────────────────────────┘</span>
+<span class="vf"> In  DOLBY SURROUND  Where Available</span></pre>
+  </header>
+
+  <section class="pic win" aria-label="The demo">
+    <div id="stage"><div class="tube"><canvas id="screen" width="320" height="200"></canvas></div></div>
+  </section>
+
+  <section class="ctl box" aria-labelledby="ctl-t">
+    <span class="t" id="ctl-t"><span class="i">D</span>emo <span class="i">C</span>ontrols</span>
+    <div class="rows">
+      <button id="start" class="btn" disabled>Loading..</button>
+      <label><span class="sel">
+        <select id="section">
+          <option value="">Whole demo</option>
+          <option value="2">2 - Title picture</option>
+          <option value="3">3 - Forest</option>
+          <option value="4">4 - City</option>
+          <option value="5">5 - Rings and credits</option>
+        </select></span><span class="lbl">Section</span>
+      </label>
+      <label class="ck" title="The city part with an interpolated picture between every two of the original's (70 fps), its polygons drawn with sub-pixel precision and shaded per pixel"><input type="checkbox" id="smoothcity"><span class="bx" aria-hidden="true"></span>Smooth City</label>
+      <label class="ck" title="Start goes fullscreen; F also toggles it"><input type="checkbox" id="full"><span class="bx" aria-hidden="true"></span>Fullscreen <span class="k1">[F]</span></label>
+      <label class="ck" title="Dark scanlines and a slight softening on the picture. Off is the original picture."><input type="checkbox" id="crt"><span class="bx" aria-hidden="true"></span>CRT Scanlines</label>
+    </div>
+    <div id="status" role="status"></div>
+  </section>
+
+
+  <section class="nfo box red" aria-labelledby="nfo-t">
+    <span class="t" id="nfo-t"><span class="i">I</span>nfo</span>
+    <dl class="nfo">
+      <dt>Group</dt><dd>Future Crew</dd>
+      <dt>Release</dt><dd>7 October 1993</dd>
+      <dt>Party</dt><dd>Won Assembly'93</dd>
+      <dt>Sound</dt><dd>Sound Blaster, SB Pro or Gravis&nbsp;UltraSound</dd>
+    </dl>
+    <p class="note">The original SECOND.EXE and REALITY.FC, served unmodified, translated instruction by instruction to WebAssembly.</p>
+    <p class="note"><span class="c1">Smooth City</span> is an optional enhancement of the city flythrough: the camera animation interpolated to 70 frames per second, with sub-pixel polygon edges. Off by default; off is the original.</p>
+  </section>
+</main>
+
+<div class="bar foot">
+  <span><span class="hi">F</span> Fullscreen</span>
+  <span class="wide"><span class="hi">Esc</span> Leave fullscreen</span>
+  <span class="sp"></span>
+</div>
+<script src="../assets/bbs.js"></script>
+<script>
+  /* The demo this page plays; web/unreal_web.js takes anything left out from
+     Unreal's defaults. The section is the DOS command tail (UNREAL_ARGS):
+     README.1ST's start points - 2 the title picture, 3 the forest (the
+     "landscape scroller"), 4 the city (the "vector part"), 5 the FUTURE CREW
+     rings and the end credits; none is the whole demo. All URLs are relative
+     to this page, so it also works from a sub-folder. */
+  const CPUBPS = 150000000;   /* the CPU speed, bytes/s: Phase 1's calibration
+                                 (SECOND_NOTES 5) - the one place to change it */
+  /* A per-program CPU speed (SECOND_PROGCPU, src/native/second/sseq.h):
+     "KEY:BPS,..." - while that program runs the clock is BPS instead of
+     CPUBPS. The default runs s16, the voxel landscape, at 75M: at 150M it
+     runs exactly twice the real-hardware video (SECOND_NOTES 15). "0" turns
+     it off; so does ?progcpu=0 on the URL (or ?progcpu=KEY:BPS,... another). */
+  const PROGCPU = new URLSearchParams(location.search).get("progcpu") ?? "0E029C:75000000";
+  window.DEMO = {
+    exe: "../../original/second/SECOND.EXE",
+    /* SECOND.EXE has no packfile: it opens REALITY.FC (the music and the
+       programs' data) and the setup's two info texts by name from its own
+       directory */
+    files: { "REALITY.FC": "../../original/second/REALITY.FC",
+             "FCINFO10.TXT": "../../original/second/FCINFO10.TXT",
+             "README.1ST": "../../original/second/README.1ST" },
+    engine: "../../build/wasm/second.js", factory: "createSecond",
+    /* the setup screen flushes the keyboard at frame 26, so the answer is
+       held until frame 40: SoundBlaster Pro, High quality, no looping */
+    env: { UNREAL_KEYS: "@40,right,right,right,enter", UNREAL_CPUBPS: String(CPUBPS),
+           UNREAL_VGARNS: "500", UNREAL_IONS: "68", UNREAL_QUIET: "1",
+           SECOND_PROGCPU: PROGCPU },
+    /* The SB Pro plays 40 kHz stereo; the engine hands out the 20 kHz mono
+       average. The worker waits for the driver's rate to hold before it
+       opens the sound. */
+    audioRate: 20000, settle: 10, setupMax: 400,
+    lead: 18,
+    hideText: true,     /* don't show the text-mode setup screen */
+    /* fetched at page load with everything else, so Start is ready whatever
+       the Smooth City box says (below) */
+    preload: ["U2E_2X.0AB", "U2E_2X_noroll.0AB"],
+  };
+  /* SMOOTH CITY (off by default): one checkbox, or ?smoothcity=1, for the
+     whole bundle -
+       the smooth city data (SECOND_SMOOTHCITY, src/native/second/sseq.h): the
+         city plays U2E_2X.0AB, its animation with an interpolated record
+         between every two, one per retrace (70 distinct pictures/s against
+         35), on a faster CPU while it runs; the 125 KB file is fetched only
+         when it is on. It carries the rebuilt camera roll (SECOND_NOTES 26);
+       the sub-pixel city (SECOND_SUBPIXEL, ssubpix.c, SECOND_NOTES 23): the
+         polygons projected without rounding to whole pixels and filled with
+         pixel-centre sampling, so slow motion no longer moves whole edges a
+         pixel at a time;
+       per-pixel shading (SECOND_SUBPIXEL_SHADE): gouraud colour interpolated
+         per pixel, and the near-clipped vertex's colour interpolated.
+     Debugging overrides, not shown: ?smoothroll=0 serves U2E_2X_noroll.0AB
+     (the smooth data before the roll rebuild) under the same name;
+     ?subpixel=0|1 and ?subpixelshade=0|1 set those two whatever the box says.
+     unreal_web.js reads DEMO.files and DEMO.env at Start, so the box edits
+     those objects in place. */
+  (() => {
+    const box = document.getElementById("smoothcity");
+    const p = new URLSearchParams(location.search);
+    const flag = (k) => { const v = p.get(k); return v === null ? null : (v === "1" || v === "true"); };
+    box.checked = flag("smoothcity") === true;
+    const roll = flag("smoothroll") !== false;
+    const sub = flag("subpixel"), shade = flag("subpixelshade");
+    const apply = () => {
+      const on = box.checked;
+      if (on) {
+        DEMO.files["U2E_2X.0AB"] = roll ? "U2E_2X.0AB" : "U2E_2X_noroll.0AB";
+        DEMO.env.SECOND_SMOOTHCITY = "1";
+      } else { delete DEMO.files["U2E_2X.0AB"]; delete DEMO.env.SECOND_SMOOTHCITY; }
+      if (sub ?? on) DEMO.env.SECOND_SUBPIXEL = "1"; else delete DEMO.env.SECOND_SUBPIXEL;
+      if (shade ?? on) DEMO.env.SECOND_SUBPIXEL_SHADE = "1"; else delete DEMO.env.SECOND_SUBPIXEL_SHADE;
+    };
+    box.addEventListener("change", apply);
+    apply();
+  })();
+  /* BEAM-ACCURATE VGA (ON by default, built into the engine; SECOND_BEAMVGA,
+     src/native/runtime/pcfull.h, SECOND_NOTES 21-23): each scanline is
+     composed from video memory and the palette as they stood when the beam
+     drew it - which removes the seam a quarter of the way down the techno
+     part's interference circles. The glenz vectors keep the whole-frame
+     compose (they tear under the beam: SECOND_NOTES 22); ?beamexclude=KEY,...
+     replaces that list, empty = none. ?beamvga=0 turns it off, for comparison. */
+  (() => {
+    const p = new URLSearchParams(location.search);
+    const bx = p.get("beamexclude");
+    if (bx !== null) DEMO.env.SECOND_BEAMVGA_EXCLUDE = bx;
+    const q = p.get("beamvga");
+    if (q === "0" || q === "false") DEMO.env.SECOND_BEAMVGA = "0";
+  })();
+</script>
+<script src="../unreal_web.js"></script>
+</body>
+</html>

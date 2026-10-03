@@ -9,11 +9,13 @@
  *                                                text) and the compiled wasm (module); the
  *                                                instance is made at init, since the
  *                                                engine's environment is fixed then
- *                    {type:"init", exe, files, env, engine, factory, settle, setupMax, lead}
+ *                    {type:"init", exe, files, env, engine, factory, settle, setupMax, lead, openRate, gapFill}
  *                                                start the engine; files: [{name, data}],
  *                                                the demo's other files, put into the
  *                                                engine's file system at "/" first
  *                    {type:"clock", t}           where the picture's clock is, in demo seconds
+ *                    {type:"key", code}          a key typed live (an engine with unreal_key:
+ *                                                AH scan code, AL ASCII; Crystal Dream 2)
  *   worker -> main   {type:"ready", pcmRate}
  *                    {type:"frame", n, t, d, w, h, idx, pal}
  *                                                every frame boundary (transferred)
@@ -37,6 +39,7 @@ const UNREAL_VGA_HZ = 70.086;       /* only for an engine that cannot report its
 let M = null, pcmBuf = 0, pcmView = null, pcmRate = 0;
 let frames = 0, ended = false, t0 = 0, clockT = -1, clockAt = 0;
 let lastT = 0;
+let gapFill = false, soundOn = false;   /* init's gapFill; the card has played */
 let loaded = null;                  /* {dir, module} after "load" (or at init without one) */
 /* the start times of the newest LEAD frames: the lead rule below */
 let LEAD = 4;
@@ -72,6 +75,14 @@ function onFrame(n) {
     for (let i = 0; i < got; i++) s[i] = (pcmView[i] - 128) / 128;
     if (pcmRate) s = resample(s, M._unreal_pcm_rate(), pcmRate);
     postMessage({ type: "pcm", n, t, d, samples: s }, [s.buffer]);
+    soundOn = true;
+  } else if (gapFill && soundOn && pcmRate && d > 0) {
+    /* gapFill: a frame in which the card played nothing (the demo stopped
+       it - Crystal Dream 2 does between its chess and its end menu) is that
+       long a silence, not a gap: the worklet's queue keeps the time, the pin
+       keeps going, and its underrun count means only the page fell behind */
+    const s = new Float32Array(Math.max(1, Math.round(d * pcmRate)));
+    postMessage({ type: "pcm", n, t, d, samples: s }, [s.buffer]);
   }
 }
 
@@ -104,6 +115,7 @@ function run() {
 onmessage = async (e) => {
   const m = e.data;
   if (m.type === "clock") { clockT = m.t; clockAt = performance.now(); return; }
+  if (m.type === "key") { if (M && M._unreal_key && !ended) M._unreal_key(m.code); return; }
   if (m.type === "load") {
     const engine = m.engine || "../build/wasm/unreal.js";
     importScripts(m.engineUrl || engine);
@@ -152,8 +164,15 @@ onmessage = async (e) => {
      first. The frames stepped here are posted as usual. */
   const settle = m.settle || 0, setupMax = m.setupMax || 400;
   LEAD = m.lead || 4;
+  gapFill = !!m.gapFill;
   let rate = 0, held = 0;
-  for (let i = 0; i < setupMax && !ended; i++) {
+  /* openRate: no wait - the sound opens at once at that rate and the driver's
+     bytes are resampled to it when they come (resample above), so the setup
+     screens play at the demo's own pace and are SEEN (Crystal Dream 2's
+     graphical setup, answered by the scripted keys); the picture follows wall
+     time until the first sound pins it. */
+  if (m.openRate) rate = m.openRate;
+  for (let i = 0; i < setupMax && !ended && !m.openRate; i++) {
     const r = M._unreal_step();
     if (r !== 1) { ended = true; break; }
     const now = M._unreal_pcm_rate();
