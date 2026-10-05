@@ -1,0 +1,3 @@
+crc fc16f394
+scale 4
+model realesrgan-x4plus-anime

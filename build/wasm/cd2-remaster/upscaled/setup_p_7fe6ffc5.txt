@@ -1,0 +1,3 @@
+crc ad302ce8
+scale 4
+model realesrgan-x4plus-anime

@@ -17,8 +17,12 @@
 
 /* canvas size outside fullscreen: the 4:3 box that fits the column (phone) or
    the space left of the side panel (desktop) */
-canvas#screen { display: block; aspect-ratio: 4 / 3; image-rendering: pixelated; background: #000;
+canvas#screen, canvas.remaster { display: block; aspect-ratio: 4 / 3; image-rendering: pixelated; background: #000;
   width: calc(100vw - 32px); max-width: 100%; }
+/* the AI Remaster's canvas (remaster.js) has the box's device pixels: drawn at
+   that size, not scaled up */
+canvas.remaster { image-rendering: auto; }
+#stage canvas[hidden] { display: none !important; }
 @media (min-width: 1000px) {
   .deck {
     max-width: none; align-items: start; justify-content: center;
@@ -26,8 +30,35 @@ canvas#screen { display: block; aspect-ratio: 4 / 3; image-rendering: pixelated;
     grid-template-areas: "head pic" "ctl pic" "stat pic" "nfo pic" ". pic";
     grid-template-rows: auto auto auto auto 1fr;
   }
-  canvas#screen { width: min(calc(100vw - 420px - 28px - 32px), calc((100vh - 6em) * 4 / 3)); max-width: none; }
+  canvas#screen, canvas.remaster { width: min(calc(100vw - 420px - 28px - 32px), calc((100vh - 6em) * 4 / 3)); max-width: none; }
 }
+
+/* a phone held LANDSCAPE: the picture is exactly the visible screen's height
+   with Safari's bars hidden (100lvh: fixed, so nothing resizes as the bars
+   come and go), the 4:3 picture centred on black,
+   and the page snaps to it - scroll it into view and it fits the screen */
+@media (orientation: landscape) and (max-height: 540px) and (pointer: coarse) {
+  html { scroll-snap-type: y proximity; }
+  /* the black reaches both screen edges (out of the page's column), so no
+     page background or stars show beside the picture */
+  #stage { scroll-snap-align: start; width: 100vw; margin-left: calc(50% - 50vw); }
+  canvas#screen, canvas.remaster { height: 100lvh; width: auto; max-width: 100%; margin: 0 auto; }
+  /* the AI Remaster's canvas spans the screen's width: the engine letterboxes
+     a 4:3 part on black itself, and draws its wide parts (the VR corridor,
+     the chess game) across the whole screen */
+  canvas.remaster { width: 100%; aspect-ratio: auto; }
+}
+
+/* the note a phone gets for ticking Fullscreen (unreal_web.js): a box in
+   the page's look, centred over a dimmed page */
+.fs-pop { position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(0, 0, 0, .6); }
+.fs-pop[hidden] { display: none; }
+.fs-pop .box { background: var(--page); max-width: 34em; margin: 0; }
+.fs-pop .ok { text-align: right; }
+.fs-pop button { font: inherit; color: inherit; background: none; border: 1px solid currentColor; padding: .2em 1.5ch; cursor: pointer; }
+html[data-look="modern"] .fs-pop .box { background: var(--card); }
+html[data-look="modern"] .fs-pop button { border-color: var(--edge); border-radius: 6px; background: var(--card2); padding: 6px 16px; }
 
 /* ---- the picture: no frame round it, just the 4:3 picture on black */
 .win { position: relative; }
@@ -107,3 +138,12 @@ body:has(#stage.max) { background: #000; overflow: hidden; }
 .pause-ui .shot { right: 12px; bottom: 12px; }
 .pause-ui .unmax { right: 12px; top: 12px; display: none; }
 #stage.max .pause-ui .unmax { display: grid; }
+
+/* ---- the AI Remaster's loading bar (remaster.js), under the controls */
+.rprog { margin-top: .8em; display: grid; gap: .3em; color: var(--w); }
+.rprog[hidden] { display: none; }
+.rprog .track { height: .5em; background: var(--b); border: calc(1rem / 16) solid var(--c); }
+.rprog .fill { height: 100%; width: 0; background: var(--c1); }
+html[data-look="modern"] .rprog { color: var(--fg); font-size: 14px; }
+html[data-look="modern"] .rprog .track { height: 6px; border: 0; border-radius: 3px; background: var(--edge); overflow: hidden; }
+html[data-look="modern"] .rprog .fill { background: var(--accent); transition: width .15s; }

@@ -1,0 +1,548 @@
+{
+ "bitmaps": [
+  {
+   "name": "setup_p_25407eb9",
+   "first": 9,
+   "files": [
+    {
+     "name": "setup_p_25407eb9.ppm",
+     "bytes": 126
+    }
+   ]
+  },
+  {
+   "name": "setup_p_7fe6ffc5",
+   "first": 9,
+   "files": [
+    {
+     "name": "setup_p_7fe6ffc5.ppm",
+     "bytes": 673006
+    }
+   ]
+  },
+  {
+   "name": "setup_p_c6e60a91",
+   "first": 9,
+   "files": [
+    {
+     "name": "setup_p_c6e60a91.ppm",
+     "bytes": 1391114
+    }
+   ]
+  },
+  {
+   "name": "setup_p_cd6a65e6",
+   "first": 9,
+   "files": [
+    {
+     "name": "setup_p_cd6a65e6.ppm",
+     "bytes": 126
+    }
+   ]
+  },
+  {
+   "name": "setup_t_1405ab69",
+   "first": 9,
+   "files": [
+    {
+     "name": "setup_t_1405ab69.ppm",
+     "bytes": 357168
+    },
+    {
+     "name": "setup_t_1405ab69_a.pgm",
+     "bytes": 62010
+    }
+   ]
+  },
+  {
+   "name": "setup_t_534bb1a5",
+   "first": 9,
+   "files": [
+    {
+     "name": "setup_t_534bb1a5.ppm",
+     "bytes": 347486
+    },
+    {
+     "name": "setup_t_534bb1a5_a.pgm",
+     "bytes": 58590
+    }
+   ]
+  },
+  {
+   "name": "setup_t_a0b80d7f",
+   "first": 9,
+   "files": [
+    {
+     "name": "setup_t_a0b80d7f.ppm",
+     "bytes": 126
+    },
+    {
+     "name": "setup_t_a0b80d7f_a.pgm",
+     "bytes": 54600
+    }
+   ]
+  },
+  {
+   "name": "setup_t_c3e670d3",
+   "first": 9,
+   "files": [
+    {
+     "name": "setup_t_c3e670d3.ppm",
+     "bytes": 357200
+    },
+    {
+     "name": "setup_t_c3e670d3_a.pgm",
+     "bytes": 62010
+    }
+   ]
+  },
+  {
+   "name": "setup_t_f7edcea2",
+   "first": 9,
+   "files": [
+    {
+     "name": "setup_t_f7edcea2.ppm",
+     "bytes": 247948
+    },
+    {
+     "name": "setup_t_f7edcea2_a.pgm",
+     "bytes": 46946
+    }
+   ]
+  },
+  {
+   "name": "intro_01064a4b",
+   "first": 771,
+   "files": [
+    {
+     "name": "intro_01064a4b.ppm",
+     "bytes": 13096
+    }
+   ]
+  },
+  {
+   "name": "intro_3fb5b507",
+   "first": 771,
+   "files": [
+    {
+     "name": "intro_3fb5b507.ppm",
+     "bytes": 20060
+    }
+   ]
+  },
+  {
+   "name": "intro_3fca42a5",
+   "first": 771,
+   "files": [
+    {
+     "name": "intro_3fca42a5.ppm",
+     "bytes": 591250
+    }
+   ]
+  },
+  {
+   "name": "intro_5f6c6700",
+   "first": 771,
+   "files": [
+    {
+     "name": "intro_5f6c6700.ppm",
+     "bytes": 30692
+    }
+   ]
+  },
+  {
+   "name": "intro_60a3d705",
+   "first": 771,
+   "files": [
+    {
+     "name": "intro_60a3d705.ppm",
+     "bytes": 22600
+    }
+   ]
+  },
+  {
+   "name": "intro_69b204c6",
+   "first": 771,
+   "files": [
+    {
+     "name": "intro_69b204c6.ppm",
+     "bytes": 11448
+    }
+   ]
+  },
+  {
+   "name": "intro_6d072413",
+   "first": 771,
+   "files": [
+    {
+     "name": "intro_6d072413.ppm",
+     "bytes": 88294
+    }
+   ]
+  },
+  {
+   "name": "intro_d540703e",
+   "first": 771,
+   "files": [
+    {
+     "name": "intro_d540703e.ppm",
+     "bytes": 65716
+    }
+   ]
+  },
+  {
+   "name": "intro_sidelogo",
+   "first": 771,
+   "files": [
+    {
+     "name": "intro_sidelogo.ppm",
+     "bytes": 165588
+    }
+   ]
+  },
+  {
+   "name": "title_view",
+   "first": 10383,
+   "files": [
+    {
+     "name": "title_view.ppm",
+     "bytes": 219720
+    }
+   ]
+  },
+  {
+   "name": "title_check",
+   "first": 13374,
+   "files": [
+    {
+     "name": "title_check.ppm",
+     "bytes": 68144
+    }
+   ]
+  },
+  {
+   "name": "title_slime",
+   "first": 15786,
+   "files": [
+    {
+     "name": "title_slime.ppm",
+     "bytes": 63714
+    }
+   ]
+  },
+  {
+   "name": "title_vr",
+   "first": 16932,
+   "files": [
+    {
+     "name": "title_vr.ppm",
+     "bytes": 75074
+    }
+   ]
+  },
+  {
+   "name": "pic_raytrac1",
+   "first": 21841,
+   "files": [
+    {
+     "name": "pic_raytrac1.ppm",
+     "bytes": 1428966
+    }
+   ]
+  },
+  {
+   "name": "tex_texture2",
+   "first": 22306,
+   "files": [
+    {
+     "name": "tex_texture2.pgm",
+     "bytes": 284680
+    }
+   ]
+  },
+  {
+   "name": "pic_raytrac4",
+   "first": 22964,
+   "files": [
+    {
+     "name": "pic_raytrac4.ppm",
+     "bytes": 2312282
+    }
+   ]
+  },
+  {
+   "name": "title_earth",
+   "first": 23398,
+   "files": [
+    {
+     "name": "title_earth.ppm",
+     "bytes": 67206
+    }
+   ]
+  },
+  {
+   "name": "tex_earth1",
+   "first": 23594,
+   "files": [
+    {
+     "name": "tex_earth1.ppm",
+     "bytes": 1191664
+    }
+   ]
+  },
+  {
+   "name": "tex_earth2",
+   "first": 23594,
+   "files": [
+    {
+     "name": "tex_earth2.ppm",
+     "bytes": 1211806
+    }
+   ]
+  },
+  {
+   "name": "tex_earth3",
+   "first": 23594,
+   "files": [
+    {
+     "name": "tex_earth3.ppm",
+     "bytes": 1227176
+    }
+   ]
+  },
+  {
+   "name": "pic_trn_l3",
+   "first": 25590,
+   "files": [
+    {
+     "name": "pic_trn_l3.ppm",
+     "bytes": 1042634
+    }
+   ]
+  },
+  {
+   "name": "scroller_tape",
+   "first": 26025,
+   "files": [
+    {
+     "name": "scroller_tape.pgm",
+     "bytes": 483446
+    }
+   ]
+  },
+  {
+   "name": "pic_raytrac3",
+   "first": 27046,
+   "files": [
+    {
+     "name": "pic_raytrac3.ppm",
+     "bytes": 603020
+    }
+   ]
+  },
+  {
+   "name": "title_chess",
+   "first": 27479,
+   "files": [
+    {
+     "name": "title_chess.ppm",
+     "bytes": 53596
+    }
+   ]
+  },
+  {
+   "name": "tex_marb32",
+   "first": 27683,
+   "files": [
+    {
+     "name": "tex_marb32.pgm",
+     "bytes": 204680
+    }
+   ]
+  },
+  {
+   "name": "menu_arrows",
+   "first": 36053,
+   "files": [
+    {
+     "name": "menu_arrows.ppm",
+     "bytes": 12010
+    },
+    {
+     "name": "menu_arrows_a.pgm",
+     "bytes": 3658
+    }
+   ]
+  },
+  {
+   "name": "menu_font",
+   "first": 36053,
+   "files": [
+    {
+     "name": "menu_font.ppm",
+     "bytes": 217008
+    }
+   ]
+  },
+  {
+   "name": "menu_mainm256",
+   "first": 36053,
+   "files": [
+    {
+     "name": "menu_mainm256.ppm",
+     "bytes": 557560
+    }
+   ]
+  }
+ ],
+ "texts": [
+  "intro_01064a4b.txt",
+  "intro_3fb5b507.txt",
+  "intro_3fca42a5.txt",
+  "intro_5f6c6700.txt",
+  "intro_60a3d705.txt",
+  "intro_69b204c6.txt",
+  "intro_6d072413.txt",
+  "intro_d540703e.txt",
+  "intro_pics.txt",
+  "intro_sidelogo.txt",
+  "menu_arrows.txt",
+  "menu_font.txt",
+  "menu_mainm256.txt",
+  "pic_raytrac1.txt",
+  "pic_raytrac3.txt",
+  "pic_raytrac4.txt",
+  "pic_trn_l3.txt",
+  "scroller_tape.txt",
+  "setup_p_25407eb9.txt",
+  "setup_p_7fe6ffc5.txt",
+  "setup_p_c6e60a91.txt",
+  "setup_p_cd6a65e6.txt",
+  "setup_t_1405ab69.txt",
+  "setup_t_534bb1a5.txt",
+  "setup_t_a0b80d7f.txt",
+  "setup_t_c3e670d3.txt",
+  "setup_t_f7edcea2.txt",
+  "tex_earth1.txt",
+  "tex_earth2.txt",
+  "tex_earth3.txt",
+  "tex_marb32.txt",
+  "tex_texture2.txt",
+  "title_check.txt",
+  "title_chess.txt",
+  "title_earth.txt",
+  "title_slime.txt",
+  "title_view.txt",
+  "title_vr.txt"
+ ],
+ "fracrings": {
+  "H": 1080,
+  "N": 1088,
+  "HL": 1664,
+  "layers": 20,
+  "files": [
+   {
+    "name": "rings1080_00.webp",
+    "layer": 0,
+    "bytes": 809546
+   },
+   {
+    "name": "rings1080_01.webp",
+    "layer": 1,
+    "bytes": 1122536
+   },
+   {
+    "name": "rings1080_02.webp",
+    "layer": 2,
+    "bytes": 1175238
+   },
+   {
+    "name": "rings1080_03.webp",
+    "layer": 3,
+    "bytes": 503674
+   },
+   {
+    "name": "rings1080_04.webp",
+    "layer": 4,
+    "bytes": 155974
+   },
+   {
+    "name": "rings1080_05.webp",
+    "layer": 5,
+    "bytes": 739096
+   },
+   {
+    "name": "rings1080_06.webp",
+    "layer": 6,
+    "bytes": 1072270
+   },
+   {
+    "name": "rings1080_07.webp",
+    "layer": 7,
+    "bytes": 1249922
+   },
+   {
+    "name": "rings1080_08.webp",
+    "layer": 8,
+    "bytes": 372498
+   },
+   {
+    "name": "rings1080_09.webp",
+    "layer": 9,
+    "bytes": 60076
+   },
+   {
+    "name": "rings1080_10.webp",
+    "layer": 10,
+    "bytes": 780618
+   },
+   {
+    "name": "rings1080_11.webp",
+    "layer": 11,
+    "bytes": 1062882
+   },
+   {
+    "name": "rings1080_12.webp",
+    "layer": 12,
+    "bytes": 1146518
+   },
+   {
+    "name": "rings1080_13.webp",
+    "layer": 13,
+    "bytes": 542964
+   },
+   {
+    "name": "rings1080_14.webp",
+    "layer": 14,
+    "bytes": 235152
+   },
+   {
+    "name": "rings1080_15.webp",
+    "layer": 15,
+    "bytes": 773476
+   },
+   {
+    "name": "rings1080_16.webp",
+    "layer": 16,
+    "bytes": 1057346
+   },
+   {
+    "name": "rings1080_17.webp",
+    "layer": 17,
+    "bytes": 1186490
+   },
+   {
+    "name": "rings1080_18.webp",
+    "layer": 18,
+    "bytes": 220162
+   },
+   {
+    "name": "rings1080_19.webp",
+    "layer": 19,
+    "bytes": 195112
+   }
+  ],
+  "bytes": 14461550
+ },
+ "bytes": 30458993
+}

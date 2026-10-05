@@ -1,0 +1,3 @@
+crc f4dd3d05
+scale 4
+model realesrgan-x4plus-anime

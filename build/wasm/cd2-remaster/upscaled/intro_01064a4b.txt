@@ -1,0 +1,3 @@
+crc af526da7
+scale 4
+model realesrgan-x4plus-anime

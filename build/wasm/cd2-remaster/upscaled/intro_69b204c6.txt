@@ -1,0 +1,3 @@
+crc 9a6d801b
+scale 4
+model realesrgan-x4plus-anime

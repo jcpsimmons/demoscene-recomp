@@ -122,7 +122,8 @@
       v.muted = true; v.playsInline = true; v.setAttribute("playsinline", "");
       v.style.cssText = "position:fixed;left:0;top:0;width:2px;height:2px;opacity:0.01;pointer-events:none";
       /* the player shows the video at the video's own shape, so the mirror
-         is 4:3 (640x480) and the 320x200 is scaled into it without smoothing */
+         is 4:3 (640x480) and the 320x200 is scaled into it without smoothing
+         (1600x1200, an exact 5x6, was tried: too slow to copy on an iPhone) */
       const m = document.createElement("canvas"); m.width = 640; m.height = 480;
       const c = m.getContext("2d");
       if (!c || !m.captureStream) return false;
@@ -131,20 +132,35 @@
       this.track = st.getVideoTracks()[0];
       if (!this.track || !this.track.requestFrame) { this.track = null; v.srcObject = m.captureStream(60); }
       else v.srcObject = st;
-      v.addEventListener("webkitendfullscreen", () => { this.active = false; fsChanged(); });
+      v.addEventListener("webkitendfullscreen", () => { this.active = false; this.size(false); fsChanged(); });
       document.body.appendChild(v);
       this.vid = v; this.mirror = m; this.mctx = c;
       /* PRE-ROLLED: one black frame pushed and the (muted, inline) video
          playing from page load, so Start can send it to the player
          synchronously in the click - iPhone refuses a video with no frame yet */
-      c.fillStyle = "#000"; c.fillRect(0, 0, 640, 480);
+      c.fillStyle = "#000"; c.fillRect(0, 0, m.width, m.height);
       if (this.track) this.track.requestFrame();
       const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
       return true;
     },
+    /* the mirror's size: 640x480 for the original (its 320x200 doubled,
+       unsmoothed); for a remaster, the screen's own pixels at 4:3 (the
+       short side, as the phone is held for the player), and the remaster
+       draws at that size while the player shows it */
+    size(on) {
+      let w = 640, h = 480;
+      if (on && alt) {
+        h = Math.round(Math.min(screen.width, screen.height) * (devicePixelRatio || 1));
+        w = Math.round(h * 4 / 3);
+      }
+      if (this.mirror.width !== w || this.mirror.height !== h) { this.mirror.width = w; this.mirror.height = h; }
+      if (alt && alt.setRenderSize) alt.setRenderSize(on ? [w, h] : null);
+    },
     push() {                                       /* called right after paint() */
       if (!this.active) return;
-      this.mctx.drawImage(canvas, 0, 0, 640, 480);
+      const m = this.mirror;
+      this.mctx.imageSmoothingEnabled = !!alt;     /* reset whenever the mirror is resized */
+      this.mctx.drawImage(alt ? alt.canvas : canvas, 0, 0, m.width, m.height);
       if (this.track) this.track.requestFrame();
     },
     /* SYNCHRONOUS, all of it inside the click: play() is started, not
@@ -155,6 +171,7 @@
       const v = this.vid;
       if (!v.webkitEnterFullscreen && !v.requestFullscreen) { status.textContent = "video fullscreen: no video fullscreen here"; return false; }
       this.active = true;
+      this.size(true);
       this.push();                                 /* so the player has a frame (black before the first picture) */
       const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
       try {
@@ -163,7 +180,7 @@
       } catch (e) { this.active = false; status.textContent = "video fullscreen refused: " + e.message; return false; }
       return true;
     },
-    exit() { if (this.vid && this.vid.webkitExitFullscreen) this.vid.webkitExitFullscreen(); this.active = false; }
+    exit() { if (this.vid && this.vid.webkitExitFullscreen) this.vid.webkitExitFullscreen(); this.active = false; if (this.mirror) this.size(false); }
   };
 
   /* ---- PRELOAD, from page load -------------------------------------------
@@ -214,7 +231,7 @@
     const [module, engineUrl] = await Promise.all([compile(), glue()].concat(urls.map(fetchBuf)));
     pre = { module, engineUrl };
     spare = warmWorker();
-    startBtn.textContent = "Start"; startBtn.disabled = false;
+    refreshStart();
   })().catch((e) => { status.textContent = "preload failed: " + (e && e.message || e); console.error(e); });
 
   /* ---- the run ------------------------------------------------------- */
@@ -235,6 +252,13 @@
    * the frame has one), with text metadata: the demo, the engine build (the
    * SHA-256 of the wasm file running), the frame number and its demo time. */
   let paused = false, shown = null, wasmSha = "";
+  /* the AI Remaster while its box is ticked (window.demoHost, remaster.js) */
+  let alt = null;
+  function refreshStart() {
+    if (alt) { const s = alt.startState(); startBtn.textContent = s.text; startBtn.disabled = s.disabled; return; }
+    if (pre) { startBtn.textContent = "Start"; startBtn.disabled = false; }
+    else { startBtn.textContent = "Loading.."; startBtn.disabled = true; }
+  }
   const overlay = document.createElement("div");
   overlay.className = "pause-ui"; overlay.hidden = true;
   overlay.innerHTML = '<div class="pause-mark" aria-hidden="true">&#10074;&#10074;</div>' +
@@ -310,7 +334,7 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   }
-  overlay.querySelector(".shot").addEventListener("click", (e) => { e.stopPropagation(); screenshot().catch((x) => console.error(x)); });
+  overlay.querySelector(".shot").addEventListener("click", (e) => { e.stopPropagation(); (alt ? alt.screenshot() : screenshot()).catch((x) => console.error(x)); });
   /* fps: what is PAINTED per second (what the viewer sees) and what the engine
      produces per second (70.086 when it keeps up), over a one-second window */
   let fpsAt = 0, fpsPainted = 0, fpsSeen = 0, fpsShown = 0, engShown = 0;
@@ -477,6 +501,25 @@
      puts it back. */
   const stage = document.getElementById("stage");
   const fullBox = document.getElementById("full");
+  /* a PHONE gets no fullscreen: ticking the box explains how to fill the
+     screen instead (held landscape, the page fits the picture to it -
+     demo.css, the same test as here) */
+  const PHONE = matchMedia("(pointer: coarse) and (max-width: 540px), (pointer: coarse) and (max-height: 540px)");
+  function phoneFullscreenNote() {
+    let pop = document.querySelector(".fs-pop");
+    if (!pop) {
+      pop = document.createElement("div");
+      pop.className = "fs-pop"; pop.hidden = true;
+      pop.innerHTML = '<div class="box" role="dialog" aria-labelledby="fs-pop-t">' +
+        '<h2 class="t" id="fs-pop-t"><span class="i">Fullscreen</span></h2>' +
+        '<p>On a phone, turn it sideways and scroll the demo into view: the picture fills the screen.</p>' +
+        '<p class="ok"><button type="button">OK</button></p></div>';
+      pop.addEventListener("click", (e) => { if (e.target === pop || e.target.closest("button")) pop.hidden = true; });
+      document.body.appendChild(pop);
+    }
+    pop.hidden = false;
+    pop.querySelector("button").focus();
+  }
   const fsApi = !!(stage.requestFullscreen || stage.webkitRequestFullscreen);
   const FSKEY = (CFG.factory || "createUnreal") + ".fullscreen";
   function isFull() {
@@ -508,16 +551,24 @@
   document.addEventListener("fullscreenchange", fsChanged);
   document.addEventListener("webkitfullscreenchange", fsChanged);
   if (fullBox && fullBox.type === "checkbox") {
-    try { fullBox.checked = localStorage.getItem(FSKEY) === "1"; } catch (e) { fullBox.checked = false; }
+    try { fullBox.checked = !PHONE.matches && localStorage.getItem(FSKEY) === "1"; } catch (e) { fullBox.checked = false; }
     fullBox.addEventListener("change", () => {
+      if (PHONE.matches) { fullBox.checked = false; fullBox.blur(); phoneFullscreenNote(); return; }
       const want = fullBox.checked;
       try { localStorage.setItem(FSKEY, want ? "1" : "0"); } catch (e) {}
-      if (!worker) return;                      /* not running: only the choice for Start */
+      if (!worker && !(alt && alt.running)) return;   /* not running: only the choice for Start */
       if (want) enterFullscreen(); else exitFullscreen();
     });
   } else if (fullBox) fullBox.addEventListener("click", toggleFullscreen);   /* a page with the old button */
   if (vfs.on) vfs.setup();                      /* pre-rolled, so Start can enter it in the click */
   startBtn.addEventListener("click", () => {
+    if (alt) {                                    /* the AI Remaster (remaster.js) */
+      if (!alt.ready) return;
+      if (fullBox && fullBox.type === "checkbox" && fullBox.checked) enterFullscreen();
+      startBtn.blur();
+      alt.start();
+      return;
+    }
     if (!pre) return;
     if (fullBox && fullBox.type === "checkbox" && fullBox.checked) enterFullscreen();   /* FIRST, before start() awaits anything */
     if (CFG.liveKeys) startBtn.blur();             /* Enter is the demo's now, not a second Start */
@@ -534,7 +585,8 @@
   overlay.appendChild(closeMax);
   stage.addEventListener("click", (e) => {
     if (e.target.closest && e.target.closest(".shot, .unmax")) return;
-    if (running && !ended) setPaused(!paused);
+    if (alt && alt.running) alt.togglePause();
+    else if (!alt && running && !ended) setPaused(!paused);
     else if (stage.classList.contains("max")) { stage.classList.remove("max"); fsChanged(); }
   });
   /* LIVE KEYS (CFG.liveKeys: an engine with unreal_key - Crystal Dream 2, whose
@@ -561,11 +613,40 @@
     return SCAN[e.code] || 0;
   };
   document.addEventListener("keydown", (e) => {
+    if (alt) {                                    /* the AI Remaster's keys (its end menu's, pause, ...) */
+      if (e.target && e.target.tagName === "SELECT") return;
+      if (alt.keydown(e)) { e.preventDefault(); return; }
+      if (e.key === "f" || e.key === "F") { e.preventDefault(); toggleFullscreen(); }
+      return;
+    }
     const code = liveKey(e);
     if (code) { e.preventDefault(); worker.postMessage({ type: "key", code }); return; }
     if (e.key === "f" || e.key === "F") { e.preventDefault(); toggleFullscreen(); }
   });
-  document.addEventListener("keyup", (e) => { if (liveKey(e)) e.preventDefault(); });   /* Space clicks on keyup */
+  document.addEventListener("keyup", (e) => { if (alt ? alt.keyup(e) : liveKey(e)) e.preventDefault(); });   /* Space clicks on keyup */
+
+  /* ---- the page host, for an alternative engine (web/remaster.js) --------
+   * A page with an "AI Remaster" option (CFG.remaster) loads remaster.js after
+   * this script. While its box is ticked it is the ALT engine: Start, the tap
+   * on the picture, the keys, the screenshot button and the fullscreen box go
+   * to it instead of this page's run; unticked (alt null) everything here is
+   * exactly as before. */
+  window.demoHost = {
+    CFG, startBtn, status, stage, canvas, fetchBuf, refreshStart,
+    stop() { if (running || worker) stopRun(); status.textContent = ""; },
+    setAlt(a) { alt = a; overlay.hidden = true; refreshStart(); },
+    showPaused(on) { overlay.hidden = !on; },
+    afterFrame() { if (vfs.active) vfs.push(); },
+    savePng(blob, fields, name) {
+      blob.arrayBuffer().then((b) => {
+        const out = pngText(new Uint8Array(b), fields);
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(out); a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      });
+    },
+  };
 
   /* this was a PWA once; a Home Screen web app on iPhone never hides the
      home indicator, not even in the video player, and a Safari bookmark

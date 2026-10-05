@@ -56,7 +56,9 @@
       </label>
       <label class="ck" title="Start goes fullscreen; F also toggles it"><input type="checkbox" id="full"><span class="bx" aria-hidden="true"></span>Fullscreen <span class="k1">[F]</span></label>
       <label class="ck" title="Dark scanlines and a slight softening on the picture. Off is the original picture."><input type="checkbox" id="crt"><span class="bx" aria-hidden="true"></span>CRT Scanlines</label>
+      <label class="ck" title="The modern rebuild (cd2-recomp): every part redrawn at your screen's resolution, the pictures AI-upscaled. Downloaded only when ticked."><input type="checkbox" id="remaster"><span class="bx" aria-hidden="true"></span>AI Remaster</label>
     </div>
+    <div id="rprog" class="rprog" hidden><span class="ptext">Loading AI Remaster... 0%</span><div class="track"><div class="fill"></div></div></div>
     <div id="status" role="status"></div>
   </section>
 
@@ -70,6 +72,7 @@
       <dt>Sound</dt><dd>Sound Blaster or Gravis&nbsp;UltraSound</dd>
     </dl>
     <p class="note">The original CD2.EXE, served unmodified, translated instruction by instruction to WebAssembly.</p>
+    <p class="note"><span class="c1">AI Remaster</span>: the demo rebuilt part by part in C, drawn at your screen's resolution with AI-upscaled pictures. It loads everything first, and only when ticked.</p>
     <p class="note">The demo's own setup screen is answered for you (<span class="c1">SoundBlaster</span>, 44000 Hz). The <span class="c1">end menu</span> is interactive: <span class="c1">arrow keys</span> and <span class="c1">Enter</span> (Credits, Greetings, Information, Comments, Messages, Rumours, Quit).</p>
   </section>
 </main>
@@ -120,8 +123,15 @@
     hideText: false,
     /* the end menu: arrows + Enter, through the 8042 (unreal_key) */
     liveKeys: true,
+    /* the "AI Remaster" box (web/remaster.js): cd2-recomp's modern rebuild,
+       loaded only when ticked - its program, workers and AI-upscaled bitmaps
+       in build/wasm/cd2-remaster/ (publish-site.bat copies them from
+       cd2-recomp's build); it reads the same CD2.EXE as above */
+    remaster: { engine: "../../build/wasm/cd2-remaster/cd2_engine.js", global: "CD2Engine",
+                build: "../../build/wasm/cd2-remaster/", name: "Crystal Dream 2 - AI Remaster", file: "cd2-remaster" },
   };
 </script>
 <script src="../unreal_web.js"></script>
+<script src="../remaster.js"></script>
 </body>
 </html>
