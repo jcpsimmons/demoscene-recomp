@@ -264,7 +264,16 @@
   overlay.innerHTML = '<div class="pause-mark" aria-hidden="true">&#10074;&#10074;</div>' +
     '<button type="button" class="shot" title="Save this frame as a PNG at the demo\'s own resolution" aria-label="Save screenshot">' +
     '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M9 4 7.2 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.2L15 4H9zm3 5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>' +
+    '</button>' +
+    '<button type="button" class="copy" title="Copy this frame to the clipboard" aria-label="Copy screenshot to the clipboard">' +
+    '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M8 2h10a2 2 0 0 1 2 2v12h-2V4H8V2zM5 6h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm0 2v12h10V8H5z"/></svg>' +
     '</button>';
+  /* COPY instead of save: the same picture, to the clipboard. The clipboard
+     write is started IN the click (Safari allows it only there) with a
+     promise for the PNG, which savePng resolves when the picture is made. */
+  const canCopy = !!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem);
+  if (!canCopy) overlay.querySelector(".copy").remove();
+  let copyTo = null;                            /* {resolve, reject} while a copy is being made */
   let resuming = false;
   function setPaused(on) {
     if (on === paused || resuming) return;
@@ -328,13 +337,28 @@
       URL: location.href.split("#")[0],
       "Creation Time": new Date().toISOString(),
     };
-    const out = pngText(new Uint8Array(await blob.arrayBuffer()), meta);
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(out); a.download = `${demo}-frame${String(f.n).padStart(6, "0")}.png`;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    savePng(blob, meta, `${demo}-frame${String(f.n).padStart(6, "0")}.png`);
+  }
+  function savePng(blob, fields, name) {
+    blob.arrayBuffer().then((b) => {
+      const out = pngText(new Uint8Array(b), fields);
+      if (copyTo) { const c = copyTo; copyTo = null; c.resolve(out); return; }
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(out); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    });
   }
   overlay.querySelector(".shot").addEventListener("click", (e) => { e.stopPropagation(); (alt ? alt.screenshot() : screenshot()).catch((x) => console.error(x)); });
+  if (canCopy) overlay.querySelector(".copy").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const png = new Promise((resolve, reject) => { copyTo = { resolve, reject }; });
+    const was = status.textContent;
+    navigator.clipboard.write([new ClipboardItem({ "image/png": png })])
+      .then(() => { status.textContent = "frame copied to the clipboard"; setTimeout(() => { if (status.textContent === "frame copied to the clipboard") status.textContent = was; }, 2500); })
+      .catch((x) => { status.textContent = "could not copy: " + (x && x.message || x); });
+    (alt ? alt.screenshot() : screenshot()).catch((x) => { if (copyTo) { copyTo.reject(x); copyTo = null; } console.error(x); });
+  });
   /* fps: what is PAINTED per second (what the viewer sees) and what the engine
      produces per second (70.086 when it keeps up), over a one-second window */
   let fpsAt = 0, fpsPainted = 0, fpsSeen = 0, fpsShown = 0, engShown = 0;
@@ -584,7 +608,7 @@
   closeMax.addEventListener("click", (e) => { e.stopPropagation(); stage.classList.remove("max"); fsChanged(); });
   overlay.appendChild(closeMax);
   stage.addEventListener("click", (e) => {
-    if (e.target.closest && e.target.closest(".shot, .unmax")) return;
+    if (e.target.closest && e.target.closest(".shot, .copy, .unmax")) return;
     if (alt && alt.running) alt.togglePause();
     else if (!alt && running && !ended) setPaused(!paused);
     else if (stage.classList.contains("max")) { stage.classList.remove("max"); fsChanged(); }
@@ -637,15 +661,7 @@
     setAlt(a) { alt = a; overlay.hidden = true; refreshStart(); },
     showPaused(on) { overlay.hidden = !on; },
     afterFrame() { if (vfs.active) vfs.push(); },
-    savePng(blob, fields, name) {
-      blob.arrayBuffer().then((b) => {
-        const out = pngText(new Uint8Array(b), fields);
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(out); a.download = name;
-        document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-      });
-    },
+    savePng,
   };
 
   /* this was a PWA once; a Home Screen web app on iPhone never hides the

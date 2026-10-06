@@ -183,7 +183,7 @@
         sizeMB = bytes / 1e6;
       }
       if (box.checked && !(eng && eng.ready) && !failed)
-        status.textContent = `loading the AI Remaster (${sizeMB.toFixed(1)} MB, once)...`;
+        status.textContent = `loading the AI Remaster (${sizeMB.toFixed(1)} MB)...`;
     } catch (e) { /* the plain note stays */ }
   }
 

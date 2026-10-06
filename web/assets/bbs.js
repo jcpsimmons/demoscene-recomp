@@ -527,7 +527,7 @@
 })();
 /* VISITORS. Our own counter: a Cloudflare Worker (web/counter) holding one
    number - no IPs, no cookies, and not on any blocklist. On the LIVE site
-   (*.github.io) a browser counts once a day (the date of its last count is
+   (*.github.io, demoscene-recomp.view.fast) a browser counts once a day (the date of its last count is
    kept in localStorage); the local preview only reads. The landing page shows
    the total (#visits) as a 90s counter; it stays hidden if it can't be read. */
 (() => {
@@ -536,7 +536,8 @@
   const box = document.getElementById("visits");
   let last = 0;
   try { last = Number(localStorage.getItem(KEY)) || 0; } catch (e) {}
-  const hit = /\.github\.io$/.test(location.hostname) && Date.now() - last > DAY;
+  const LIVE = /\.github\.io$|^demoscene-recomp\.view\.fast$/;     /* the published sites: they count */
+  const hit = LIVE.test(location.hostname) && Date.now() - last > DAY;
   if ((!hit && !box) || !window.fetch) return;
   fetch(API + (hit ? "/hit" : "/count"), { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))

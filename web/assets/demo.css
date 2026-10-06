@@ -76,6 +76,10 @@ html[data-look="modern"] .fs-pop button { border-color: var(--edge); border-radi
 #stage.max { position: fixed; inset: 0; z-index: 2000; }
 #stage.max canvas { width: min(100vw, calc(100dvh * 4 / 3)); height: min(100dvh, calc(100vw * 3 / 4)); aspect-ratio: auto; max-width: none; }
 body:has(#stage.max) { background: #000; overflow: hidden; }
+/* the AI Remaster fills the whole screen in fullscreen: it letterboxes its
+   4:3 scenes itself and draws the wide ones (VR, chess, ...) edge to edge */
+#stage:fullscreen canvas.remaster { width: 100vw; height: 100vh; }
+#stage.max canvas.remaster { width: 100vw; height: 100dvh; }
 
 /* ---- CRT picture: OPT-IN (#crt), off by default ---------------------------
    scanlines (one per VGA line pair of a 200-line picture) and a soft phosphor
@@ -136,6 +140,7 @@ body:has(#stage.max) { background: #000; overflow: hidden; }
 }
 .pause-ui button:hover, .pause-ui button:focus-visible { background: rgba(60, 60, 80, .9); outline: none; }
 .pause-ui .shot { right: 12px; bottom: 12px; }
+.pause-ui .copy { right: 64px; bottom: 12px; }
 .pause-ui .unmax { right: 12px; top: 12px; display: none; }
 #stage.max .pause-ui .unmax { display: grid; }
 

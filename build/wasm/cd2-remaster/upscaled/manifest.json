@@ -116,7 +116,7 @@
    "files": [
     {
      "name": "intro_01064a4b.ppm",
-     "bytes": 13096
+     "bytes": 13212
     }
    ]
   },
@@ -166,7 +166,7 @@
    "files": [
     {
      "name": "intro_69b204c6.ppm",
-     "bytes": 11448
+     "bytes": 11648
     }
    ]
   },
@@ -176,7 +176,7 @@
    "files": [
     {
      "name": "intro_6d072413.ppm",
-     "bytes": 88294
+     "bytes": 7268
     }
    ]
   },
@@ -186,7 +186,7 @@
    "files": [
     {
      "name": "intro_d540703e.ppm",
-     "bytes": 65716
+     "bytes": 5810
     }
    ]
   },
@@ -544,5 +544,5 @@
   ],
   "bytes": 14461550
  },
- "bytes": 30458993
+ "bytes": 30318361
 }
