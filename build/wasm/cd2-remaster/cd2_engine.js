@@ -70,7 +70,7 @@
   /* the start points the menu offers: the parts and scenes, in whole-run frames */
   const SECTIONS = [
     [1, "The whole demo"], [763, "Intro"], [4194, "Glenz and the vector objects"], [12526, "Plasma"],
-    [13373, "Check this out (the fractal)"], [15787, "Vectorslime"], [16931, "Virtual Reality"],
+    [13373, "Fractal Zoom"], [15787, "Vectorslime"], [16931, "Virtual Reality"],
     [21824, "Pictures and the torus"], [23395, "Vector World"], [26021, "The scroller"],
     [27477, "Last Event (chess)"], [36004, "The end menu"],
   ].map(([value, label]) => ({ value, label }));
