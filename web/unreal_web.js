@@ -502,7 +502,7 @@
         status.textContent = "running" + (gl ? " (WebGL)" : " (2D)");
         rafId = requestAnimationFrame(tick);
       }
-      else if (m.type === "ended") { ended = true; status.textContent = "the demo has ended"; }
+      else if (m.type === "ended") { ended = true; status.textContent = "the demo has ended"; if (window.recompStats) window.recompStats.ended(); }
       else if (m.type === "error") { ended = true; status.textContent = "engine stopped: " + m.rc; }
     };
     w.postMessage({ type: "init", exe, files, env, engine: CFG.engine, factory: CFG.factory,
@@ -591,12 +591,14 @@
       if (fullBox && fullBox.type === "checkbox" && fullBox.checked) enterFullscreen();
       startBtn.blur();
       alt.start();
+      if (window.recompStats) window.recompStats.start(1);   /* the visit log (bbs.js) */
       return;
     }
     if (!pre) return;
     if (fullBox && fullBox.type === "checkbox" && fullBox.checked) enterFullscreen();   /* FIRST, before start() awaits anything */
     if (CFG.liveKeys) startBtn.blur();             /* Enter is the demo's now, not a second Start */
     start().catch((e) => { status.textContent = String(e); console.error(e); });
+    if (window.recompStats) window.recompStats.start(0);     /* the visit log (bbs.js) */
   });
   /* a tap on the picture pauses or plays (pause and screenshot, above); the
      laid-over stage (no Fullscreen API) is left by F, the checkbox, or the

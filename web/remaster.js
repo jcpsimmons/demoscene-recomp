@@ -129,7 +129,7 @@
         onProgress: (f) => { frac = f; showProgress(); if (box.checked) host.refreshStart(); },
         onStatus: (t) => { lastStatus = t; if (box.checked) status.textContent = t; },
         onPause: (p) => { if (box.checked) host.showPaused(p); },
-        onEnded: (why) => { host.showPaused(false); if (box.checked) { status.textContent = why; host.refreshStart(); } },
+        onEnded: (why) => { host.showPaused(false); if (window.recompStats) window.recompStats.ended(); if (box.checked) { status.textContent = why; host.refreshStart(); } },
         onFrame: () => host.afterFrame(),
       });
       window.remaster = eng;                      /* for a test driver */

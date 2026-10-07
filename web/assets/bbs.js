@@ -551,3 +551,65 @@
     })
     .catch(() => {});
 })();
+/* VISIT LOG. Anonymous events for the stats (web/counter, POST /event), on
+   the LIVE sites only: a "view" on every page load, a "start" when a demo's
+   Start is pressed (window.recompStats.start, from unreal_web.js), and one
+   "watch" when the page is hidden or left after a start - how long, bucketed,
+   and whether the demo reached its end. Each event stands alone: no cookie,
+   no stored ID, nothing linking one to another. What a page adds is coarse
+   on purpose: the GPU as a vendor class (the renderer string never leaves the page), the
+   language's two letters, the referring domain, a utm source/campaign. The
+   worker adds the country and region and reduces the User-Agent to browser,
+   OS and device class. The local preview sends nothing. */
+(() => {
+  const API = "https://recomp-counter.demoscene-recomp.workers.dev/event";
+  const LIVE = /\.github\.io$|^demoscene-recomp\.view\.fast$/;
+  const noop = { start() {}, ended() {} };
+  if (!LIVE.test(location.hostname)) { window.recompStats = noop; return; }
+  const send = (o) => {
+    const body = JSON.stringify(o);
+    try { if (navigator.sendBeacon && navigator.sendBeacon(API, body)) return; } catch (e) {}
+    try { fetch(API, { method: "POST", body, keepalive: true, mode: "no-cors", credentials: "omit" }).catch(() => {}); } catch (e) {}
+  };
+  const m = location.pathname.match(/\/(unreal|second|cd2|stars)\/(?:index\.html)?$/);
+  const page = m ? m[1] : /\/(?:web\/)?(?:index\.html)?$/.test(location.pathname) ? "landing" : "other";
+  /* what every event carries: the page and the coarse device facts */
+  const base = { p: page, l: (navigator.language || "").slice(0, 2).toLowerCase() };
+  if (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) base.tm = 1;   /* an iPad asking for the desktop site */
+  try {
+    const c = document.createElement("canvas");
+    const gl = c.getContext("webgl2") || c.getContext("webgl");
+    base.w2 = typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext ? "yes" : "no";
+    base.g = "unknown";
+    if (gl) {
+      const ext = gl.getExtension("WEBGL_debug_renderer_info");
+      const r = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) + " " + gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : "");
+      if (r.trim()) base.g = /apple/i.test(r) ? "apple" : /nvidia|geforce|quadro|rtx/i.test(r) ? "nvidia" : /amd|radeon|\bati\b/i.test(r) ? "amd"
+        : /intel/i.test(r) ? "intel" : /adreno|qualcomm/i.test(r) ? "qualcomm" : /mali/i.test(r) ? "arm-mali" : /powervr|imagination/i.test(r) ? "imagination" : "other";
+      const lose = gl.getExtension("WEBGL_lose_context"); if (lose) lose.loseContext();
+    }
+  } catch (e) {}
+  /* the view: where it came from */
+  const view = Object.assign({ e: "view" }, base);
+  try { if (document.referrer) { const h = new URL(document.referrer).hostname; if (h !== location.hostname) view.r = h; } } catch (e) {}
+  try {
+    const q = new URLSearchParams(location.search), us = q.get("utm_source"), uc = q.get("utm_campaign");
+    if (us || uc) view.c = ((us || "") + (uc ? "/" + uc : "")).slice(0, 40);
+  } catch (e) {}
+  send(view);
+  /* start and watch: one watch per start cycle, sent when the page is hidden
+     or left; the time counts from the first start of the cycle */
+  let t0 = 0, rm = 0, end = 0;
+  const watch = () => {
+    if (!t0) return;
+    const s = (Date.now() - t0) / 1000;
+    send(Object.assign({ e: "watch", rm, end, wt: s < 10 ? "<10s" : s < 30 ? "10-30s" : s < 60 ? "30-60s" : s < 180 ? "1-3m" : s < 600 ? "3-10m" : "10m+" }, base));
+    t0 = 0; end = 0;
+  };
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") watch(); });
+  window.addEventListener("pagehide", watch);
+  window.recompStats = {
+    start(remaster) { rm = remaster ? 1 : 0; if (!t0) { t0 = Date.now(); end = 0; } send(Object.assign({ e: "start", rm }, base)); },
+    ended() { if (t0) end = 1; },
+  };
+})();

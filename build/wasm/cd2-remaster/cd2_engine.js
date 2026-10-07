@@ -81,6 +81,11 @@
   function create(opt) {
     opt = opt || {};
     const canvas = opt.canvas;
+    /* the browser can take the GPU back (a phone short of memory): the
+       picture then stays black while the sound plays on - say so */
+    let glLost = false;
+    canvas.addEventListener("webglcontextlost", () => { glLost = true; try { console.warn("cd2: WebGL context lost"); } catch (e) {} });
+    canvas.addEventListener("webglcontextrestored", () => { try { console.warn("cd2: WebGL context restored (the picture does not come back without a reload)"); } catch (e) {} });
     if (!canvas.id) canvas.id = "cd2-engine-" + (++instances);
     const BUILD = new URL(opt.build || new URL("../build/web/", HERE).href, location.href).href;
     const SCRIPTS = new URL(opt.scripts || HERE, location.href).href;
@@ -495,7 +500,8 @@
       return `frame ${n} (${(n / HZ).toFixed(2)} s)  ${(M && M.UTF8ToString(M._cd2_web_scene(n))) || (live ? "menu" : "")}` +
         `${live ? " (your keys)" : ""}  -  ${faithful ? "original pixels" : "modern"}, ` +
         `${!soundOk ? "no sound (wall clock)" : (muted ? "muted" : soundModern ? "modern sound" : "original sound")}` +
-        `  -  ${fps.toFixed(0)} fps at ${canvas.width}x${canvas.height}${paused ? "  -  paused" : ""}`;
+        `  -  ${fps.toFixed(0)} fps at ${canvas.width}x${canvas.height}${paused ? "  -  paused" : ""}` +
+        (glLost ? "  -  GRAPHICS LOST: the browser took back the GPU (memory?) - reload the page" : "");
     }
 
     function tick(ts) {
