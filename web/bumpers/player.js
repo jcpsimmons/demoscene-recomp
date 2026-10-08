@@ -62,7 +62,26 @@
   };
 
   /* ---- sound ---- */
+  /* iOS plays Web Audio through the ringer, so the silent switch mutes it.
+     Declaring the page's sound as media playback (Safari 17+) and, for older
+     iOS, starting a silent <audio> in the same tap moves it to the media
+     volume, which the switch leaves alone. */
+  let unmute = null;
+  const mediaSession = () => {
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
+    if (!unmute) {
+      const n = 4410, b = new DataView(new ArrayBuffer(44 + n * 2));
+      const s = (o, str) => { for (let i = 0; i < str.length; i++) b.setUint8(o + i, str.charCodeAt(i)); };
+      s(0, "RIFF"); b.setUint32(4, 36 + n * 2, true); s(8, "WAVE"); s(12, "fmt "); b.setUint32(16, 16, true);
+      b.setUint16(20, 1, true); b.setUint16(22, 1, true); b.setUint32(24, 44100, true); b.setUint32(28, 88200, true);
+      b.setUint16(32, 2, true); b.setUint16(34, 16, true); s(36, "data"); b.setUint32(40, n * 2, true);
+      unmute = new Audio(URL.createObjectURL(new Blob([b.buffer], { type: "audio/wav" })));
+      unmute.loop = true; unmute.setAttribute("playsinline", "");
+    }
+    unmute.play().catch(() => {});
+  };
   const audio = () => {
+    mediaSession();
     if (actx) return;
     actx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "playback" });
     out = actx.createGain(); out.connect(actx.destination);
