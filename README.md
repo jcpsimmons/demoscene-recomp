@@ -49,7 +49,7 @@ at 70 Hz, or at 140 Hz or higher.
 
 Unreal and Second Reality are by [Future Crew](https://en.wikipedia.org/wiki/Future_Crew),
 Crystal Dream 2 is by [Triton](https://en.wikipedia.org/wiki/Triton_(demogroup)),
-Stars: Wonders of the World is by NoooN; all were released as freeware. The original release files are served
+Stars: Wonders of the World is by NoooN; all were released free to the demoscene. The original release files are served
 unmodified, as the demos read them at run time.
 
 The site's text font is IBM VGA 8x16 by VileR, int10h.org (CC BY-SA 4.0).
