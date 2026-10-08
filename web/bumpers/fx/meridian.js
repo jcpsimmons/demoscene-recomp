@@ -105,7 +105,7 @@
 
   DS.add({
     id: "mss-production", name: "A Meridian Strategic Systems production", group: "Meridian Strategic Systems",
-    kind: "End card", duration: 5, hero: 2.6,
+    kind: "End card", duration: 5, hero: 3.2,
     blurb: "The end card. Interference rings in navy behind a framed panel, a small globe spinning above the name, the web address in gold. Soft resolve, fades out.",
     draw(t) {
       DS.rings(t * 0.6, DEEP, hex("#0d1f3a"), 16);
