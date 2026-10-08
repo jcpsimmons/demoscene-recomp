@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="../icons/icon-192.png">
+<meta name="theme-color" content="#000000">
+<title>Bumper player</title>
+<script src="../assets/fit.js"></script>
+<link rel="preload" href="../assets/Web437_IBM_VGA_8x16.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../assets/bbs.css">
+<link rel="stylesheet" href="../assets/demo.css">
+<link rel="stylesheet" href="../assets/modern.css">
+<link rel="stylesheet" href="bumpers.css">
+</head>
+<body>
+<div class="bar top">
+  <a href="./">&#9668; <span class="rt">BUMPERS</span><span class="mo">Bumpers and intros</span></a>
+  <span class="sp"></span>
+  <span class="hi wide rt">demoscene-recomp BBS</span>
+  <span class="rt">NODE 2</span><span class="c rt"><span class="wide">USR HST DS V32Bis </span>38,4Kbps</span>
+  <span class="lookm"><button type="button" id="lookbtn" aria-haspopup="menu" aria-expanded="false" aria-controls="lookmenu" title="Site style">&#8801;</button><span id="lookmenu" role="menu" aria-label="Site style" hidden><span class="lh">Site style</span><button type="button" role="menuitemradio" data-look="retro">Retro</button><button type="button" role="menuitemradio" data-look="modern">Modern</button></span></span>
+</div>
+
+<main class="deck">
+  <header class="head">
+    <h1 class="sr" id="title">Bumper</h1>
+<pre class="logo" style="--cols: 30" aria-hidden="true"><span class="vf">█▀▄ █ █ █▄ ▄█ █▀█ █▀▀ █▀▄ █▀▀</span>
+<span class="c1">█▀▄ █ █ █ ▀ █ █▀▀ █▀▀ █▀▄ ▀▀█</span>
+<span class="v9">▀▀  ▀▀▀ ▀   ▀ ▀   ▀▀▀ ▀ ▀ ▀▀▀</span></pre>
+    <p class="sub"><span class="y" id="fxname"></span><span class="k1">&#9472;</span><span class="c1" id="fxgroup"></span></p>
+  </header>
+
+  <section class="pic win" aria-label="The picture">
+    <div id="stage"><div class="tube"><canvas id="screen" width="480" height="270"></canvas></div></div>
+  </section>
+
+  <section class="ctl box" aria-labelledby="ctl-t">
+    <span class="t" id="ctl-t"><span class="i">C</span>ontrols</span>
+    <div class="rows">
+      <div class="row2">
+        <button id="play" class="btn" disabled>Loading..</button>
+        <button id="rec" class="btn rec" disabled title="Record one pass to a 1920x1080 video file">Record</button>
+      </div>
+      <label><span class="sel"><select id="pick" aria-label="Bumper"></select></span><span class="lbl">Bumper</span></label>
+      <div class="row2">
+        <label class="ck"><input type="checkbox" id="repeat"><span class="bx" aria-hidden="true"></span>Repeat <span class="k1">[L]</span></label>
+        <label class="ck"><input type="checkbox" id="mute"><span class="bx" aria-hidden="true"></span>Mute <span class="k1">[M]</span></label>
+        <label class="ck"><input type="checkbox" id="crt"><span class="bx" aria-hidden="true"></span>CRT</label>
+        <label class="ck"><input type="checkbox" id="full"><span class="bx" aria-hidden="true"></span>Fullscreen <span class="k1">[F]</span></label>
+      </div>
+      <div class="fields" id="fields" hidden></div>
+    </div>
+    <div id="status" role="status"></div>
+  </section>
+
+  <section class="nfo box red" aria-labelledby="nfo-t">
+    <span class="t" id="nfo-t"><span class="i">I</span>nfo</span>
+    <dl class="nfo">
+      <dt>Kind</dt><dd id="fxkind"></dd>
+      <dt>Length</dt><dd id="fxlen"></dd>
+      <dt>Picture</dt><dd>480x270, scaled 4x to 1080p or 8x to 4K</dd>
+    </dl>
+    <p class="note" id="fxblurb"></p>
+    <p class="note" id="fxcredit" hidden>Bust: Double headed herm, The Fitzwilliam Museum, Cambridge (GR.20.1850), CC BY 4.0.</p>
+    <p class="cli">Frame-exact master for an edit: <code id="fxcli"></code></p>
+    <p class="note">For OBS, add a browser source pointed at <a id="obslink" href="#">this page with ?obs=1</a>. It starts on its own and repeats.</p>
+  </section>
+</main>
+
+<div class="bar foot">
+  <span><span class="hi">Space</span> Play</span>
+  <span><span class="hi">&#8592;&#8594;</span> Bumper</span>
+  <span class="wide"><span class="hi">F</span> Fullscreen</span>
+  <span class="wide"><span class="hi">R</span> Record</span>
+  <span class="sp"></span>
+</div>
+<script src="../assets/bbs.js"></script>
+<script src="engine.js"></script>
+<script src="audio.js"></script>
+<script src="janus-mesh.js"></script>
+<script src="fx/meridian.js"></script>
+<script src="fx/drj.js"></script>
+<script src="fx/pdl.js"></script>
+<script src="fx/sponsor.js"></script>
+<script src="player.js"></script>
+</body>
+</html>

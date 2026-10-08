@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en" class="big">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<title>Bumpers and intros</title>
+<link rel="icon" href="../icons/icon-192.png">
+<meta name="description" content="Demoscene bumpers, stings and loops for the Dr. J Show, Meridian Strategic Systems and Plausible Deniability Labs.">
+<script src="../assets/fit.js"></script>
+<link rel="preload" href="../assets/Web437_IBM_VGA_8x16.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../assets/bbs.css">
+<link rel="stylesheet" href="../assets/modern.css">
+<link rel="stylesheet" href="bumpers.css">
+</head>
+<body>
+<div class="bar top">
+  <a href="../">&#9668; <span class="rt">MAIN MENU</span><span class="mo">demoscene-recomp</span></a>
+  <span class="sp"></span>
+  <span class="hi wide rt">demoscene-recomp BBS</span>
+  <span class="rt">NODE 2</span><span class="c rt"><span class="wide">USR HST DS V32Bis </span>38,4Kbps</span>
+  <span class="lookm"><button type="button" id="lookbtn" aria-haspopup="menu" aria-expanded="false" aria-controls="lookmenu" title="Site style">&#8801;</button><span id="lookmenu" role="menu" aria-label="Site style" hidden><span class="lh">Site style</span><button type="button" role="menuitemradio" data-look="retro">Retro</button><button type="button" role="menuitemradio" data-look="modern">Modern</button></span></span>
+</div>
+
+<main class="screen gal">
+  <header>
+    <h1 class="sr">Bumpers and intros</h1>
+<pre class="logo" aria-hidden="true"><span class="vf">█▀▄ █ █ █▄ ▄█ █▀█ █▀▀ █▀▄ █▀▀</span>
+<span class="c1">█▀▄ █ █ █ ▀ █ █▀▀ █▀▀ █▀▄ ▀▀█</span>
+<span class="v9">▀▀  ▀▀▀ ▀   ▀ ▀   ▀▀▀ ▀ ▀ ▀▀▀</span>
+<span class="vf">    █ █▄ █ ▀█▀ █▀▄ █▀█ █▀▀</span>
+<span class="c1">    █ █ ▀█  █  █▀▄ █ █ ▀▀█</span>
+<span class="v9">    ▀ ▀  ▀  ▀  ▀ ▀ ▀▀▀ ▀▀▀</span></pre>
+    <p class="tag"><span class="k1">&#9472;&#9552;&#8801;</span> Bumpers, stings and loops for the Dr. J Show, drawn one pixel at a time like it's 1993. <span class="k1">&#8801;&#9552;&#9472;</span></p>
+  </header>
+
+  <div id="groups"></div>
+
+  <section class="box use" aria-labelledby="use-t">
+    <h2 class="t" id="use-t"><span class="i">U</span>sing them</h2>
+    <ol>
+      <li>Click a picture to play it. Space plays, F goes fullscreen, and the sponsor slate takes its name from the fields on its page.</li>
+      <li>For an edit, render a master with the exact frames and the sound: <code>node tools/render.mjs drj-show</code> writes a 4K ProRes file that drops straight into Resolve. <code>--size 1080</code> makes 1080p, <code>--mp4</code> adds an H.264 copy.</li>
+      <li>For a stream, add a player page as a browser source with <code>?obs=1</code> on the end. It starts by itself and keeps going.</li>
+    </ol>
+  </section>
+
+  <section class="box red" aria-labelledby="cr-t">
+    <h2 class="t" id="cr-t"><span class="i">C</span>redits</h2>
+    <p>Every frame is drawn in software into a 480x270 buffer, the way a mode 13h intro drew into video memory, and every sound comes out of a few oscillators and one second of noise. No samples, no WebGL.</p>
+    <p>Bust: Double headed herm, The Fitzwilliam Museum, Cambridge (GR.20.1850), <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</p>
+    <p>Greetings to <span class="y">Future Crew</span>, <span class="y">Triton</span> and <span class="y">NoooN</span>, whose demos are on the <a href="../">main menu</a> of this BBS, and to <a href="https://github.com/treylorswift/demoscene-recomp">demoscene-recomp</a>, which got them running here.</p>
+  </section>
+
+  <p class="fine rt">Font: IBM VGA 8x16 by VileR, int10h.org (<a href="../assets/FONT-LICENSE.TXT">CC BY-SA 4.0</a>)</p>
+</main>
+
+<div class="bar foot">
+  <span><span class="hi">Click</span> Play</span>
+  <span class="wide"><span class="hi">?obs=1</span> Browser source</span>
+  <span class="sp"></span>
+</div>
+
+<script src="../assets/bbs.js"></script>
+<script src="engine.js"></script>
+<script src="audio.js"></script>
+<script src="janus-mesh.js"></script>
+<script src="fx/meridian.js"></script>
+<script src="fx/drj.js"></script>
+<script src="fx/pdl.js"></script>
+<script src="fx/sponsor.js"></script>
+<script>
+  /* the gallery: a card per intro, grouped, each with its hero frame drawn live */
+  (async () => {
+    const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
+    const root = document.getElementById("groups");
+    const thumbs = [];
+    for (const grp of [...new Set(DS.list.map((f) => f.group))]) {
+      const box = el("section", "box"), t = el("h2", "t");
+      t.innerHTML = grp.replace(/\b(\w)/g, '<span class="i">$1</span>');
+      box.appendChild(t);
+      const ul = el("ul", "cards");
+      for (const f of DS.list.filter((x) => x.group === grp)) {
+        const li = el("li", "card"), href = `play.html?fx=${f.id}`;
+        const a = el("a", "pic"); a.href = href; a.setAttribute("aria-label", `Play ${f.name}`);
+        const cv = el("canvas"); cv.width = DS.W; cv.height = DS.H; a.appendChild(cv); li.appendChild(a);
+        const nm = el("div", "nm"), name = el("a", null, f.name); name.href = href;
+        nm.append(name, el("span", "kind", f.kind + (f.silent ? ", silent" : "")), el("span", "len", f.loop ? `loop ${f.duration}s` : `${f.duration}s`));
+        li.append(nm, el("p", null, f.blurb));
+        ul.appendChild(li); thumbs.push([f, cv]);
+      }
+      box.appendChild(ul); root.appendChild(box);
+    }
+    await DS.loadFont("../assets/Web437_IBM_VGA_8x16.woff");
+    const img = new ImageData(new Uint8ClampedArray(DS.main.buffer), DS.W, DS.H);
+    /* one per animation frame, so the page stays responsive while they draw */
+    for (const [f, cv] of thumbs) {
+      await new Promise(requestAnimationFrame);
+      f.draw(f.hero); cv.getContext("2d").putImageData(img, 0, 0);
+    }
+  })();
+</script>
+</body>
+</html>

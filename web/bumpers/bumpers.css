@@ -1,0 +1,60 @@
+/* bumpers - the gallery and the player. Loaded after bbs.css (and demo.css on
+ * the player). The pictures are 480x270: 16:9, scaled up pixelated. */
+
+/* ---- the player: the demo pages' deck, with a 16:9 picture ---------------- */
+canvas#screen { aspect-ratio: 16 / 9; }
+@media (min-width: 1000px) {
+  canvas#screen { width: min(calc(100vw - 420px - 28px - 32px), calc((100vh - 6em) * 16 / 9)); }
+}
+@media (orientation: landscape) and (max-height: 540px) and (pointer: coarse) {
+  canvas#screen { height: 100lvh; width: auto; }
+}
+#stage:fullscreen canvas#screen { width: min(100vw, calc(100vh * 16 / 9)); height: min(100vh, calc(100vw * 9 / 16)); }
+#stage.max canvas#screen { width: min(100vw, calc(100dvh * 16 / 9)); height: min(100dvh, calc(100vw * 9 / 16)); }
+/* the CRT lines: one per two picture rows of 270 */
+#stage.crt .tube::after { background-size: 100% calc(100% / 135); }
+#stage { cursor: pointer; }
+.ctl .row2 { display: flex; flex-wrap: wrap; gap: .6em 2ch; align-items: baseline; }
+.ctl .fields { display: grid; gap: .5em; width: 100%; }
+.ctl .fields[hidden] { display: none; }
+.ctl .fields label { display: grid; gap: .2em; color: var(--c1); }
+.ctl .fields input {
+  font: inherit; width: 100%; background: var(--k); color: var(--y); padding: .2em 1ch; border-radius: 0;
+  border: calc(1rem / 16) solid var(--c); border-image: linear-gradient(to right, var(--c) 0 6%, var(--c1) 6% 94%, var(--c) 94% 100%) 1;
+  text-transform: uppercase;
+}
+.ctl .fields input.keep { text-transform: none; }
+.ctl .fields input:focus { outline: 2px solid var(--y); outline-offset: 1px; }
+.btn.rec { background: var(--r1); }
+.btn.rec.on { background: var(--y); }
+.nfo code, .cli code { color: var(--y); word-break: break-all; }
+.cli { margin-top: .9em; color: var(--w0); }
+
+/* OBS / browser-source mode (?obs=1): the picture and nothing else */
+body.obs { background: #000; }
+body.obs > :not(main), body.obs main > :not(.pic) { display: none !important; }
+body.obs main.deck { display: block; padding: 0; max-width: none; }
+body.obs #stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; cursor: none; }
+body.obs canvas#screen { width: min(100vw, calc(100vh * 16 / 9)); height: min(100vh, calc(100vw * 9 / 16)); max-width: none; }
+
+/* ---- the gallery ------------------------------------------------------------ */
+.screen { max-width: 110ch; margin: 0 auto; padding: 1.5em 16px 2em; }
+.gal header { text-align: center; }
+.gal header pre.logo { --cols: 30; --max: 1.6rem; display: inline-block; text-align: left; }
+.gal .tag { margin: 1em 0 0; color: var(--w); text-align: center; }
+.gal .tag .k1 { color: var(--r); }
+.cards { list-style: none; margin: .4em 0 0; padding: 0; display: grid; gap: 1.4em 3ch; grid-template-columns: repeat(auto-fill, minmax(min(100%, 40ch), 1fr)); }
+.card a.pic { display: block; background: #000; }
+.card a.pic:hover { background: #000; outline: 2px solid var(--y); }
+.card canvas { display: block; width: 100%; aspect-ratio: 16 / 9; image-rendering: pixelated; background: #000; }
+.card .nm { display: flex; gap: 1ch; align-items: baseline; margin: .5em 0 .2em; flex-wrap: wrap; }
+.card .nm a { color: var(--w); }
+.card .nm a:hover { background: var(--b); }
+.card .kind { color: var(--c1); }
+.card .len { color: var(--y); margin-left: auto; }
+.card p { margin: 0; color: var(--w0); }
+.gal .use ol { margin: 0; padding-left: 4ch; }
+.gal .use li { margin: 0 0 .5em; }
+.gal .use code { color: var(--y); word-break: break-all; }
+.gal .fine { color: var(--w0); margin-top: 1.4em; text-align: center; }
+.gal .fine a { color: var(--w0); text-decoration: underline; }

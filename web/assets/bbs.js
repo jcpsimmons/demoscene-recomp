@@ -536,7 +536,9 @@
   const box = document.getElementById("visits");
   let last = 0;
   try { last = Number(localStorage.getItem(KEY)) || 0; } catch (e) {}
-  const LIVE = /\.github\.io$|^demoscene-recomp\.view\.fast$/;     /* the published sites: they count */
+  const LIVE = /^treylorswift\.github\.io$|^demoscene-recomp\.view\.fast$/;     /* the published sites: they count */
+  /* a fork's own site would show this site's total as its own: not shown there */
+  if (!LIVE.test(location.hostname) && /\.github\.io$/.test(location.hostname)) return;
   const hit = LIVE.test(location.hostname) && Date.now() - last > DAY;
   if ((!hit && !box) || !window.fetch) return;
   fetch(API + (hit ? "/hit" : "/count"), { cache: "no-store" })
@@ -563,7 +565,7 @@
    OS and device class. The local preview sends nothing. */
 (() => {
   const API = "https://recomp-counter.demoscene-recomp.workers.dev/event";
-  const LIVE = /\.github\.io$|^demoscene-recomp\.view\.fast$/;
+  const LIVE = /^treylorswift\.github\.io$|^demoscene-recomp\.view\.fast$/;
   const noop = { start() {}, ended() {} };
   if (!LIVE.test(location.hostname)) { window.recompStats = noop; return; }
   const send = (o) => {

@@ -1,0 +1,9 @@
+{
+  "name": "bumpers-render",
+  "private": true,
+  "type": "module",
+  "description": "Renders the Bumpers & Intros section to video masters (see render.mjs).",
+  "dependencies": {
+    "playwright": "1.58.0"
+  }
+}
