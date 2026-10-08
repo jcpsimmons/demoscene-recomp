@@ -1,3 +1,11 @@
+/* Rebuild web/bumpers/janus-mesh.js from the Janus scan (a meshopt-compressed GLB):
+ * decode, weld the normal seams, simplify to about 10k triangles, normalise to a
+ * unit box and pack as base64 Int16 positions + Uint16 triangles.
+ *
+ *   cd tools && npm install
+ *   node tools/janus-mesh.mjs path/to/fitzwilliam-double-herm.glb web/bumpers/janus-mesh.js 3500
+ *
+ * Bust: Double headed herm, The Fitzwilliam Museum, Cambridge (GR.20.1850), CC BY 4.0. */
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { MeshoptDecoder, MeshoptSimplifier } from 'meshoptimizer';

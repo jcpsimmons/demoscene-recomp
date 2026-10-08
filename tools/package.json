@@ -4,6 +4,9 @@
   "type": "module",
   "description": "Renders the Bumpers & Intros section to video masters (see render.mjs).",
   "dependencies": {
-    "playwright": "1.58.0"
+    "playwright": "1.58.0",
+    "@gltf-transform/core": "4.1.1",
+    "@gltf-transform/extensions": "4.1.1",
+    "meshoptimizer": "0.22.0"
   }
 }
